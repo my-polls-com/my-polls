@@ -356,19 +356,107 @@
     #logout-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); color: var(--cream); }
 
     /* ══════════════════════════════════════════
-       POLLS SCREEN
+       POLLS SCREEN — LEVEL SECTIONS
     ══════════════════════════════════════════ */
     #polls-screen { display: none; }
+
+    /* ── Level filter bar ────────────────────── */
+    .level-filter-bar {
+      max-width: 760px;
+      margin: 0 auto 28px;
+      padding: 0 20px;
+    }
+    .level-filter-inner {
+      display: flex;
+      gap: 6px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 14px;
+      padding: 5px;
+    }
+    .lf-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 8px;
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      color: rgba(245,240,232,0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .lf-btn .lf-icon { font-size: 1.1rem; line-height: 1; }
+    .lf-btn .lf-label { font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.7rem; }
+    .lf-btn .lf-count {
+      font-size: 0.65rem;
+      color: rgba(245,240,232,0.3);
+      font-weight: 300;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .lf-btn:hover { background: rgba(255,255,255,0.07); color: rgba(245,240,232,0.75); }
+
+    .lf-btn.active[data-filter="all"] {
+      background: rgba(255,255,255,0.12);
+      color: var(--cream);
+    }
+    .lf-btn.active[data-filter="national"] {
+      background: rgba(59,130,246,0.2);
+      color: #93c5fd;
+    }
+    .lf-btn.active[data-filter="state"] {
+      background: rgba(168,85,247,0.2);
+      color: #d8b4fe;
+    }
+    .lf-btn.active[data-filter="county"] {
+      background: rgba(34,197,94,0.2);
+      color: #86efac;
+    }
 
     main {
       max-width: 760px;
       margin: 0 auto;
       padding: 0 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
     }
 
+    /* Level section wrapper */
+    .level-section { margin-bottom: 44px; }
+
+    .level-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .level-icon { font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
+    .level-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .level-title.national { color: #93c5fd; }
+    .level-title.state    { color: #d8b4fe; }
+    .level-title.county   { color: #86efac; }
+
+    .level-divider {
+      flex: 1;
+      height: 1px;
+    }
+    .level-divider.national { background: linear-gradient(90deg, rgba(147,197,253,0.35), transparent); }
+    .level-divider.state    { background: linear-gradient(90deg, rgba(216,180,254,0.35), transparent); }
+    .level-divider.county   { background: linear-gradient(90deg, rgba(134,239,172,0.35), transparent); }
+
+    .level-polls { display: flex; flex-direction: column; gap: 28px; }
+
+    /* Poll card */
     .poll-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -504,6 +592,23 @@
     #reset-button:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); color: var(--cream); }
 
     /* ══════════════════════════════════════════
+       LEVEL CHIPS / BADGES (shared)
+    ══════════════════════════════════════════ */
+    .level-chip {
+      display: inline-block;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+    .level-chip.national { background: rgba(59,130,246,0.18);  border: 1px solid rgba(59,130,246,0.35);  color: #93c5fd; }
+    .level-chip.state    { background: rgba(168,85,247,0.18);  border: 1px solid rgba(168,85,247,0.35);  color: #d8b4fe; }
+    .level-chip.county   { background: rgba(34,197,94,0.18);   border: 1px solid rgba(34,197,94,0.35);   color: #86efac; }
+
+    /* ══════════════════════════════════════════
        ADMIN SCREEN
     ══════════════════════════════════════════ */
     #admin-screen { display: none; }
@@ -623,11 +728,16 @@
     }
 
     .stats-poll-block { margin-bottom: 28px; }
+    .stats-poll-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
     .stats-poll-question {
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--cream);
-      margin-bottom: 12px;
     }
     .stats-bar-row { margin-bottom: 10px; }
     .stats-bar-label {
@@ -698,13 +808,19 @@
       padding: 24px 28px;
       position: relative;
     }
+    .mgmt-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
     .mgmt-card .mgmt-q {
       font-family: 'Playfair Display', serif;
       font-size: 1.05rem;
       font-weight: 700;
       color: var(--cream);
-      margin-bottom: 10px;
-      padding-right: 80px;
+      flex: 1;
     }
     .mgmt-card .mgmt-opts {
       display: flex;
@@ -720,12 +836,16 @@
       font-size: 0.78rem;
       color: rgba(245,240,232,0.7);
     }
+    .mgmt-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
     .mgmt-actions {
       display: flex;
       gap: 10px;
-      position: absolute;
-      top: 22px;
-      right: 22px;
     }
     .mgmt-btn {
       background: transparent;
@@ -800,6 +920,52 @@
       font-style: italic;
       min-height: 1em;
     }
+
+    /* ── Level picker (admin form) ───────────── */
+    .level-picker {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .level-pick-btn {
+      border-radius: 10px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: rgba(245,240,232,0.55);
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.82rem;
+      letter-spacing: 0.06em;
+      transition: all 0.18s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .level-pick-btn .lpb-icon { font-size: 1.35rem; }
+    .level-pick-btn .lpb-label { font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.72rem; }
+    .level-pick-btn .lpb-sub { font-size: 0.68rem; color: rgba(245,240,232,0.3); letter-spacing: 0; text-transform: none; font-weight: 300; }
+
+    .level-pick-btn:hover { background: rgba(255,255,255,0.1); color: var(--cream); }
+
+    .level-pick-btn.selected[data-level="national"] {
+      background: rgba(59,130,246,0.18);
+      border-color: rgba(59,130,246,0.55);
+      color: #93c5fd;
+    }
+    .level-pick-btn.selected[data-level="state"] {
+      background: rgba(168,85,247,0.18);
+      border-color: rgba(168,85,247,0.55);
+      color: #d8b4fe;
+    }
+    .level-pick-btn.selected[data-level="county"] {
+      background: rgba(34,197,94,0.18);
+      border-color: rgba(34,197,94,0.55);
+      color: #86efac;
+    }
+    .level-pick-btn.invalid-level { border-color: var(--error) !important; }
 
     .options-builder { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
     .option-row {
@@ -907,10 +1073,9 @@
       .register-card, .create-card { padding: 28px 22px; }
       .poll-card { padding: 24px 20px; }
       .mgmt-card { padding: 18px 16px; }
-      .mgmt-actions { position: static; margin-top: 12px; }
-      .mgmt-card .mgmt-q { padding-right: 0; }
       .admin-tabs { flex-direction: column; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
+      .level-picker { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -1028,6 +1193,32 @@
       <button id="logout-btn">↩ Log out</button>
     </div>
 
+    <!-- Level filter bar -->
+    <div class="level-filter-bar">
+      <div class="level-filter-inner">
+        <button class="lf-btn active" data-filter="all">
+          <span class="lf-icon">🗳</span>
+          <span class="lf-label">All Polls</span>
+          <span class="lf-count" id="lf-count-all"></span>
+        </button>
+        <button class="lf-btn" data-filter="national">
+          <span class="lf-icon">🇺🇸</span>
+          <span class="lf-label">National</span>
+          <span class="lf-count" id="lf-count-national"></span>
+        </button>
+        <button class="lf-btn" data-filter="state">
+          <span class="lf-icon">🏛</span>
+          <span class="lf-label">State</span>
+          <span class="lf-count" id="lf-count-state"></span>
+        </button>
+        <button class="lf-btn" data-filter="county">
+          <span class="lf-icon">🏘</span>
+          <span class="lf-label">County</span>
+          <span class="lf-count" id="lf-count-county"></span>
+        </button>
+      </div>
+    </div>
+
     <main id="polls-container"></main>
 
     <div class="submit-section">
@@ -1061,23 +1252,15 @@
 
       <!-- ── STATS PANEL ───────────────────────────────── -->
       <div id="tab-stats" class="admin-panel active">
-
         <div class="stats-grid" id="admin-stats-grid"></div>
-
         <p class="admin-section-title">Results by Poll</p>
         <div id="admin-poll-stats"></div>
-
         <p class="admin-section-title" style="margin-top:32px">All Submissions</p>
         <div class="sub-table-wrap">
           <table id="submissions-table">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Age</th>
-                <th>ZIP</th>
-                <th>Submitted</th>
-                <th>Q1</th><th>Q2</th><th>Q3</th>
+                <th>#</th><th>Name</th><th>Age</th><th>ZIP</th><th>Submitted</th>
               </tr>
             </thead>
             <tbody id="submissions-tbody"></tbody>
@@ -1095,6 +1278,29 @@
       <div id="tab-create" class="admin-panel">
         <div class="create-card">
           <h3 id="create-panel-title">Create New Poll</h3>
+
+          <!-- Level picker -->
+          <div class="admin-field">
+            <label>Poll Level <span style="color:rgba(245,240,232,0.3);font-size:0.7rem;letter-spacing:0">(required)</span></label>
+            <div class="level-picker" id="level-picker">
+              <button class="level-pick-btn" data-level="national" type="button">
+                <span class="lpb-icon">🇺🇸</span>
+                <span class="lpb-label">National</span>
+                <span class="lpb-sub">Federal-level issue</span>
+              </button>
+              <button class="level-pick-btn" data-level="state" type="button">
+                <span class="lpb-icon">🏛</span>
+                <span class="lpb-label">State</span>
+                <span class="lpb-sub">State-level issue</span>
+              </button>
+              <button class="level-pick-btn" data-level="county" type="button">
+                <span class="lpb-icon">🏘</span>
+                <span class="lpb-label">County</span>
+                <span class="lpb-sub">Local-level issue</span>
+              </button>
+            </div>
+            <span class="admin-field-err" id="err-poll-level"></span>
+          </div>
 
           <div class="admin-field">
             <label for="poll-question-input">Poll Question</label>
@@ -1128,16 +1334,24 @@
     const ADMIN_PASSWORD = "admin123";   // ← change this
 
     const KEY_USER      = "wtp_user";
-    const KEY_POLLS_DEF = "wtp_polls_def";   // custom poll definitions
+    const KEY_POLLS_DEF = "wtp_polls_def";
     const KEY_POLLS     = "wtp_polls_v2";
     const KEY_SUBMITTED = "wtp_submitted";
     const KEY_ALL_SUBS  = "wtp_all_submissions";
     const KEY_USERS     = "wtp_users";
 
-    // ── Default polls (shown if no custom ones saved) ──────────────
+    // Level meta
+    const LEVELS = [
+      { id: "national", label: "National", icon: "🇺🇸" },
+      { id: "state",    label: "State",    icon: "🏛"  },
+      { id: "county",   label: "County",   icon: "🏘"  },
+    ];
+
+    // ── Default polls ──────────────────────────────────────────────
     const DEFAULT_POLLS = [
       {
         id: "q1",
+        level: "national",
         question: "Who would you vote for if elections were tomorrow?",
         options: [
           { id: "vance",   label: "JD Vance"   },
@@ -1147,6 +1361,7 @@
       },
       {
         id: "q2",
+        level: "national",
         question: "Should voter ID be required by federal law?",
         options: [
           { id: "yes",     label: "Yes"          },
@@ -1156,6 +1371,7 @@
       },
       {
         id: "q3",
+        level: "national",
         question: "Do you support US military intervention in Iran?",
         options: [
           { id: "yes",     label: "Yes"          },
@@ -1171,7 +1387,11 @@
     function loadPollDefs() {
       try {
         const saved = JSON.parse(localStorage.getItem(KEY_POLLS_DEF) || "null");
-        return Array.isArray(saved) && saved.length ? saved : JSON.parse(JSON.stringify(DEFAULT_POLLS));
+        if (Array.isArray(saved) && saved.length) {
+          // Back-fill level for old polls that don't have it
+          return saved.map(p => ({ level: "national", ...p }));
+        }
+        return JSON.parse(JSON.stringify(DEFAULT_POLLS));
       } catch { return JSON.parse(JSON.stringify(DEFAULT_POLLS)); }
     }
     function savePollDefs(defs) {
@@ -1183,11 +1403,12 @@
     // ══════════════════════════════════════════════════════════════
     //  APP STATE
     // ══════════════════════════════════════════════════════════════
-    let currentUser = null;
-    let pollState   = {};
-    let submitted   = false;
-    let adminMode   = false;
-    let editingPollId = null;   // null = create mode, string = edit mode
+    let currentUser   = null;
+    let pollState     = {};
+    let submitted     = false;
+    let adminMode     = false;
+    let editingPollId = null;
+    let selectedLevel = null;   // for the create/edit form
 
     function loadAll() {
       try { currentUser = JSON.parse(localStorage.getItem(KEY_USER) || "null"); }  catch { currentUser = null; }
@@ -1287,6 +1508,34 @@
     }
 
     // ══════════════════════════════════════════════════════════════
+    //  LEVEL FILTER
+    // ══════════════════════════════════════════════════════════════
+    let activeFilter = "all";
+
+    function updateFilterCounts() {
+      const counts = { all: POLLS.length, national: 0, state: 0, county: 0 };
+      POLLS.forEach(p => { counts[p.level || "national"]++; });
+      ["all","national","state","county"].forEach(key => {
+        const el = document.getElementById(`lf-count-${key}`);
+        if (el) el.textContent = counts[key] + " poll" + (counts[key] !== 1 ? "s" : "");
+      });
+      // Hide tabs with zero polls (except "all")
+      document.querySelectorAll(".lf-btn[data-filter]").forEach(btn => {
+        const f = btn.dataset.filter;
+        if (f !== "all") btn.style.display = counts[f] === 0 ? "none" : "";
+      });
+    }
+
+    document.querySelectorAll(".lf-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.filter;
+        document.querySelectorAll(".lf-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      });
+    });
+
+    // ══════════════════════════════════════════════════════════════
     //  POLLS LOGIC
     // ══════════════════════════════════════════════════════════════
     function getOrInitPoll(pollId, options) {
@@ -1294,7 +1543,6 @@
         pollState[pollId] = { ranked: null, counts: {} };
         options.forEach(o => pollState[pollId].counts[o.id] = 0);
       }
-      // ensure any new options have a count entry
       options.forEach(o => { if (!(o.id in pollState[pollId].counts)) pollState[pollId].counts[o.id] = 0; });
       return pollState[pollId];
     }
@@ -1304,46 +1552,90 @@
     }
     function anyAnswered() { return answeredCount() >= 1; }
 
+    // ── Render polls grouped by level (respects activeFilter) ──────
     function render() {
       const container = document.getElementById("polls-container");
       container.innerHTML = "";
 
-      POLLS.forEach((poll, idx) => {
-        const ps        = getOrInitPoll(poll.id, poll.options);
-        const total     = poll.options.reduce((s, o) => s + (ps.counts[o.id] || 0), 0);
-        const hasRanked = ps.ranked !== null;
+      updateFilterCounts();
 
-        const card = document.createElement("div");
-        card.className = "poll-card" + (submitted && hasRanked ? " submitted-card" : "");
-        card.innerHTML = `
-          <p class="poll-number">
-            Poll ${idx + 1} of ${POLLS.length}
-            ${submitted && hasRanked ? '<span class="submitted-badge">✓ Submitted</span>' : ""}
-          </p>
-          <h2 class="poll-question">${poll.question}</h2>
-          <div class="options" id="opts-${poll.id}"></div>
-          <div class="results-section">
-            <p class="results-label">Results</p>
-            <div id="bars-${poll.id}"></div>
-            <p class="total-rankings">${total} ranking${total !== 1 ? "s" : ""} cast</p>
-            ${hasRanked && !submitted ? `<p class="ranked-notice">✓ Ranked · change before submitting</p>` : ""}
-            ${hasRanked &&  submitted ? `<p class="ranked-notice">✓ Your ranking is locked in</p>` : ""}
+      // Build a flat poll index for numbering across ALL polls
+      const pollIndex = {};
+      POLLS.forEach((p, i) => { pollIndex[p.id] = i + 1; });
+
+      // Determine which levels to show
+      const levelsToShow = activeFilter === "all"
+        ? LEVELS
+        : LEVELS.filter(lv => lv.id === activeFilter);
+
+      let anyVisible = false;
+
+      levelsToShow.forEach(lv => {
+        const levelPolls = POLLS.filter(p => (p.level || "national") === lv.id);
+        if (!levelPolls.length) return;
+        anyVisible = true;
+
+        const section = document.createElement("div");
+        section.className = "level-section";
+        section.innerHTML = `
+          <div class="level-header">
+            <span class="level-icon">${lv.icon}</span>
+            <span class="level-title ${lv.id}">${lv.label}</span>
+            <div class="level-divider ${lv.id}"></div>
           </div>
+          <div class="level-polls" id="level-polls-${lv.id}"></div>
         `;
-        container.appendChild(card);
+        container.appendChild(section);
 
-        const optsEl = card.querySelector(`#opts-${poll.id}`);
-        poll.options.forEach(opt => {
-          const btn     = document.createElement("button");
-          btn.className = "rank-btn" + (ps.ranked === opt.id ? " selected" : "");
-          btn.textContent = opt.label;
-          if (submitted) { btn.disabled = true; }
-          else { btn.addEventListener("click", () => castRank(poll.id, opt.id, poll.options)); }
-          optsEl.appendChild(btn);
+        const pollsEl = section.querySelector(`#level-polls-${lv.id}`);
+
+        levelPolls.forEach(poll => {
+          const ps        = getOrInitPoll(poll.id, poll.options);
+          const total     = poll.options.reduce((s, o) => s + (ps.counts[o.id] || 0), 0);
+          const hasRanked = ps.ranked !== null;
+          const num       = pollIndex[poll.id];
+
+          const card = document.createElement("div");
+          card.className = "poll-card" + (submitted && hasRanked ? " submitted-card" : "");
+          card.innerHTML = `
+            <p class="poll-number">
+              Poll ${num} of ${POLLS.length}
+              <span class="level-chip ${lv.id}" style="margin-left:8px">${lv.icon} ${lv.label}</span>
+              ${submitted && hasRanked ? '<span class="submitted-badge">✓ Submitted</span>' : ""}
+            </p>
+            <h2 class="poll-question">${poll.question}</h2>
+            <div class="options" id="opts-${poll.id}"></div>
+            <div class="results-section">
+              <p class="results-label">Results</p>
+              <div id="bars-${poll.id}"></div>
+              <p class="total-rankings">${total} ranking${total !== 1 ? "s" : ""} cast</p>
+              ${hasRanked && !submitted ? `<p class="ranked-notice">✓ Ranked · change before submitting</p>` : ""}
+              ${hasRanked &&  submitted ? `<p class="ranked-notice">✓ Your ranking is locked in</p>` : ""}
+            </div>
+          `;
+          pollsEl.appendChild(card);
+
+          const optsEl = card.querySelector(`#opts-${poll.id}`);
+          poll.options.forEach(opt => {
+            const btn     = document.createElement("button");
+            btn.className = "rank-btn" + (ps.ranked === opt.id ? " selected" : "");
+            btn.textContent = opt.label;
+            if (submitted) { btn.disabled = true; }
+            else { btn.addEventListener("click", () => castRank(poll.id, opt.id, poll.options)); }
+            optsEl.appendChild(btn);
+          });
+
+          renderBars(poll, ps, total);
         });
-
-        renderBars(poll, ps, total);
       });
+
+      // Empty state when filter has no polls
+      if (!anyVisible) {
+        const empty = document.createElement("div");
+        empty.style.cssText = "text-align:center;padding:60px 20px;color:rgba(245,240,232,0.3);font-style:italic";
+        empty.textContent = "No polls at this level yet.";
+        container.appendChild(empty);
+      }
 
       updateSubmitUI();
     }
@@ -1423,6 +1715,7 @@
         user: currentUser,
         answers: POLLS.map(p => ({
           pollId:      p.id,
+          level:       p.level || "national",
           question:    p.question,
           ranked:      pollState[p.id]?.ranked || null,
           rankedLabel: p.options.find(o => o.id === pollState[p.id]?.ranked)?.label || "",
@@ -1471,17 +1764,14 @@
     document.getElementById("pw-overlay").addEventListener("click", e => {
       if (e.target === document.getElementById("pw-overlay")) closePwModal();
     });
-
     document.getElementById("pw-input").addEventListener("keydown", e => {
       if (e.key === "Enter") attemptAdminLogin();
     });
-
     document.getElementById("pw-submit").addEventListener("click", attemptAdminLogin);
 
     function closePwModal() {
       document.getElementById("pw-overlay").classList.remove("visible");
     }
-
     function attemptAdminLogin() {
       const val = document.getElementById("pw-input").value;
       if (val === ADMIN_PASSWORD) {
@@ -1513,7 +1803,7 @@
         document.getElementById(`tab-${tab.dataset.tab}`).classList.add("active");
         if (tab.dataset.tab === "stats")  renderStatsPanel();
         if (tab.dataset.tab === "polls")  renderPollsMgmt();
-        if (tab.dataset.tab === "create") { resetCreateForm(); }
+        if (tab.dataset.tab === "create") resetCreateForm();
       });
     });
 
@@ -1532,13 +1822,15 @@
       const allUsers = JSON.parse(localStorage.getItem(KEY_USERS) || "[]");
       const polls    = loadPollDefs();
 
-      // Summary cards
       const grid = document.getElementById("admin-stats-grid");
       const totalVotes = allSubs.length;
       const avgAge = allSubs.length
         ? Math.round(allSubs.reduce((s, sub) => s + (sub.user?.age || 0), 0) / allSubs.length)
         : "—";
       const uniqueZips = new Set(allSubs.map(s => s.user?.zip).filter(Boolean)).size;
+      const nationalCount = polls.filter(p => (p.level||"national") === "national").length;
+      const stateCount    = polls.filter(p => p.level === "state").length;
+      const countyCount   = polls.filter(p => p.level === "county").length;
 
       grid.innerHTML = `
         <div class="stat-card"><div class="stat-val">${polls.length}</div><div class="stat-label">Active Polls</div></div>
@@ -1546,57 +1838,82 @@
         <div class="stat-card"><div class="stat-val">${totalVotes}</div><div class="stat-label">Total Submissions</div></div>
         <div class="stat-card"><div class="stat-val">${typeof avgAge === "number" ? avgAge : "—"}</div><div class="stat-label">Avg. Respondent Age</div></div>
         <div class="stat-card"><div class="stat-val">${uniqueZips}</div><div class="stat-label">Unique ZIP Codes</div></div>
+        <div class="stat-card">
+          <div class="stat-val" style="font-size:1.1rem;display:flex;justify-content:center;gap:10px;align-items:baseline">
+            <span style="color:#93c5fd">${nationalCount}</span>
+            <span style="color:#d8b4fe">${stateCount}</span>
+            <span style="color:#86efac">${countyCount}</span>
+          </div>
+          <div class="stat-label">Nat · State · County</div>
+        </div>
       `;
 
-      // Per-poll aggregate (sum across all submissions)
+      // Per-poll stats grouped by level
       const pollStats = document.getElementById("admin-poll-stats");
       pollStats.innerHTML = "";
 
-      polls.forEach(poll => {
-        // Aggregate counts across all submissions
-        const agg = {};
-        poll.options.forEach(o => agg[o.id] = 0);
+      LEVELS.forEach(lv => {
+        const lvPolls = polls.filter(p => (p.level || "national") === lv.id);
+        if (!lvPolls.length) return;
 
-        allSubs.forEach(sub => {
-          const ans = sub.answers?.find(a => a.pollId === poll.id);
-          if (ans?.ranked && agg[ans.ranked] !== undefined) agg[ans.ranked]++;
-        });
+        const lvHeader = document.createElement("div");
+        lvHeader.style.cssText = "display:flex;align-items:center;gap:10px;margin:24px 0 14px";
+        lvHeader.innerHTML = `
+          <span style="font-size:1.1rem">${lv.icon}</span>
+          <span style="font-family:'Playfair Display',serif;font-size:0.9rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${lv.id==='national'?'#93c5fd':lv.id==='state'?'#d8b4fe':'#86efac'}">${lv.label}</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+        `;
+        pollStats.appendChild(lvHeader);
 
-        const total = Object.values(agg).reduce((s, v) => s + v, 0);
-        const block = document.createElement("div");
-        block.className = "stats-poll-block";
-        block.innerHTML = `<p class="stats-poll-question">${poll.question}</p>`;
-        poll.options.forEach(opt => {
-          const count = agg[opt.id] || 0;
-          const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
-          const row   = document.createElement("div");
-          row.className = "stats-bar-row";
-          row.innerHTML = `
-            <div class="stats-bar-label">
-              <span>${opt.label}</span>
-              <span class="count">${count} <span style="color:rgba(245,240,232,0.35);font-weight:300">(${pct}%)</span></span>
-            </div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${pct}%"></div>
+        lvPolls.forEach(poll => {
+          const agg = {};
+          poll.options.forEach(o => agg[o.id] = 0);
+          allSubs.forEach(sub => {
+            const ans = sub.answers?.find(a => a.pollId === poll.id);
+            if (ans?.ranked && agg[ans.ranked] !== undefined) agg[ans.ranked]++;
+          });
+          const total = Object.values(agg).reduce((s, v) => s + v, 0);
+
+          const block = document.createElement("div");
+          block.className = "stats-poll-block";
+          block.innerHTML = `
+            <div class="stats-poll-header">
+              <p class="stats-poll-question">${poll.question}</p>
             </div>
           `;
-          block.appendChild(row);
+          poll.options.forEach(opt => {
+            const count = agg[opt.id] || 0;
+            const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+            const row   = document.createElement("div");
+            row.className = "stats-bar-row";
+            row.innerHTML = `
+              <div class="stats-bar-label">
+                <span>${opt.label}</span>
+                <span class="count">${count} <span style="color:rgba(245,240,232,0.35);font-weight:300">(${pct}%)</span></span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${pct}%"></div>
+              </div>
+            `;
+            block.appendChild(row);
+          });
+          pollStats.appendChild(block);
         });
-        pollStats.appendChild(block);
       });
 
       // Submissions table
-      const tbody = document.getElementById("submissions-tbody");
-      // Rebuild header for dynamic poll count
-      const thead = document.querySelector("#submissions-table thead tr");
+      const tbody  = document.getElementById("submissions-tbody");
+      const thead  = document.querySelector("#submissions-table thead tr");
       thead.innerHTML = `<th>#</th><th>Name</th><th>Age</th><th>ZIP</th><th>Submitted</th>` +
-        polls.map((p, i) => `<th>Q${i+1}</th>`).join("");
+        polls.map((p, i) => {
+          const lv = LEVELS.find(l => l.id === (p.level || "national"));
+          return `<th title="${p.question}">${lv?.icon || ""} Q${i+1}</th>`;
+        }).join("");
 
       if (!allSubs.length) {
         tbody.innerHTML = `<tr><td colspan="${5 + polls.length}" class="no-data">No submissions yet</td></tr>`;
         return;
       }
-
       tbody.innerHTML = "";
       [...allSubs].reverse().forEach((sub, idx) => {
         const date = new Date(sub.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
@@ -1621,9 +1938,9 @@
 
     // ── Polls management ──────────────────────────────────────────
     function renderPollsMgmt() {
-      const polls = loadPollDefs();
+      const polls   = loadPollDefs();
       const allSubs = JSON.parse(localStorage.getItem(KEY_ALL_SUBS) || "[]");
-      const list  = document.getElementById("polls-mgmt-list");
+      const list    = document.getElementById("polls-mgmt-list");
       list.innerHTML = "";
 
       if (!polls.length) {
@@ -1631,20 +1948,40 @@
         return;
       }
 
-      polls.forEach(poll => {
-        const responseCount = allSubs.filter(s => s.answers?.find(a => a.pollId === poll.id && a.ranked)).length;
-        const card = document.createElement("div");
-        card.className = "mgmt-card";
-        card.innerHTML = `
-          <p class="mgmt-q">${poll.question}</p>
-          <div class="mgmt-opts">${poll.options.map(o => `<span class="opt-chip">${o.label}</span>`).join("")}</div>
-          <p class="mgmt-responses">${responseCount} response${responseCount !== 1 ? "s" : ""}</p>
-          <div class="mgmt-actions">
-            <button class="mgmt-btn edit" data-id="${poll.id}">✎ Edit</button>
-            <button class="mgmt-btn del"  data-id="${poll.id}">✕ Delete</button>
-          </div>
+      // Group by level
+      LEVELS.forEach(lv => {
+        const lvPolls = polls.filter(p => (p.level || "national") === lv.id);
+        if (!lvPolls.length) return;
+
+        const lvHeader = document.createElement("div");
+        lvHeader.style.cssText = "display:flex;align-items:center;gap:10px;margin:8px 0 12px";
+        lvHeader.innerHTML = `
+          <span style="font-size:1.05rem">${lv.icon}</span>
+          <span style="font-family:'Playfair Display',serif;font-size:0.85rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:${lv.id==='national'?'#93c5fd':lv.id==='state'?'#d8b4fe':'#86efac'}">${lv.label}</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.1)"></div>
         `;
-        list.appendChild(card);
+        list.appendChild(lvHeader);
+
+        lvPolls.forEach(poll => {
+          const responseCount = allSubs.filter(s => s.answers?.find(a => a.pollId === poll.id && a.ranked)).length;
+          const card = document.createElement("div");
+          card.className = "mgmt-card";
+          card.innerHTML = `
+            <div class="mgmt-card-header">
+              <p class="mgmt-q">${poll.question}</p>
+              <span class="level-chip ${lv.id}">${lv.icon} ${lv.label}</span>
+            </div>
+            <div class="mgmt-opts">${poll.options.map(o => `<span class="opt-chip">${o.label}</span>`).join("")}</div>
+            <div class="mgmt-footer">
+              <p class="mgmt-responses">${responseCount} response${responseCount !== 1 ? "s" : ""}</p>
+              <div class="mgmt-actions">
+                <button class="mgmt-btn edit" data-id="${poll.id}">✎ Edit</button>
+                <button class="mgmt-btn del"  data-id="${poll.id}">✕ Delete</button>
+              </div>
+            </div>
+          `;
+          list.appendChild(card);
+        });
       });
 
       list.querySelectorAll(".mgmt-btn.edit").forEach(btn => {
@@ -1668,14 +2005,35 @@
     // ══════════════════════════════════════════════════════════════
     //  ADMIN — CREATE / EDIT POLL FORM
     // ══════════════════════════════════════════════════════════════
+    function setSelectedLevel(lvId) {
+      selectedLevel = lvId;
+      document.querySelectorAll(".level-pick-btn").forEach(btn => {
+        btn.classList.toggle("selected", btn.dataset.level === lvId);
+        btn.classList.remove("invalid-level");
+      });
+    }
+
+    // Level picker click
+    document.getElementById("level-picker").addEventListener("click", e => {
+      const btn = e.target.closest(".level-pick-btn");
+      if (!btn) return;
+      setSelectedLevel(btn.dataset.level);
+      document.getElementById("err-poll-level").textContent = "";
+    });
+
     function resetCreateForm() {
       editingPollId = null;
+      selectedLevel = null;
       document.getElementById("create-panel-title").textContent = "Create New Poll";
       document.getElementById("poll-question-input").value = "";
-      document.getElementById("err-poll-q").textContent   = "";
-      document.getElementById("err-poll-opts").textContent = "";
+      document.getElementById("poll-question-input").classList.remove("invalid");
+      document.getElementById("err-poll-q").textContent     = "";
+      document.getElementById("err-poll-level").textContent  = "";
+      document.getElementById("err-poll-opts").textContent   = "";
       document.getElementById("cancel-edit-btn").style.display = "none";
       document.getElementById("save-poll-btn").textContent = "Save Poll →";
+      // Clear level selection
+      document.querySelectorAll(".level-pick-btn").forEach(b => { b.classList.remove("selected"); b.classList.remove("invalid-level"); });
       buildOptionRows(["", "", ""]);
     }
 
@@ -1687,10 +2045,13 @@
       editingPollId = id;
       document.getElementById("create-panel-title").textContent = "Edit Poll";
       document.getElementById("poll-question-input").value = poll.question;
-      document.getElementById("err-poll-q").textContent   = "";
-      document.getElementById("err-poll-opts").textContent = "";
+      document.getElementById("poll-question-input").classList.remove("invalid");
+      document.getElementById("err-poll-q").textContent    = "";
+      document.getElementById("err-poll-level").textContent = "";
+      document.getElementById("err-poll-opts").textContent  = "";
       document.getElementById("cancel-edit-btn").style.display = "inline-flex";
       document.getElementById("save-poll-btn").textContent = "Update Poll →";
+      setSelectedLevel(poll.level || "national");
       buildOptionRows(poll.options.map(o => o.label));
 
       // Switch to create tab
@@ -1749,15 +2110,25 @@
     document.getElementById("cancel-edit-btn").addEventListener("click", resetCreateForm);
 
     document.getElementById("save-poll-btn").addEventListener("click", () => {
-      const question = document.getElementById("poll-question-input").value.trim();
+      const question  = document.getElementById("poll-question-input").value.trim();
       const optInputs = [...document.querySelectorAll("#options-builder .option-row input")];
       const optLabels = optInputs.map(i => i.value.trim());
 
       let valid = true;
-      document.getElementById("err-poll-q").textContent   = "";
-      document.getElementById("err-poll-opts").textContent = "";
+      document.getElementById("err-poll-level").textContent = "";
+      document.getElementById("err-poll-q").textContent     = "";
+      document.getElementById("err-poll-opts").textContent  = "";
       optInputs.forEach(i => i.classList.remove("invalid"));
+      document.querySelectorAll(".level-pick-btn").forEach(b => b.classList.remove("invalid-level"));
 
+      // Validate level
+      if (!selectedLevel) {
+        document.getElementById("err-poll-level").textContent = "Please select a poll level.";
+        document.querySelectorAll(".level-pick-btn").forEach(b => b.classList.add("invalid-level"));
+        valid = false;
+      }
+
+      // Validate question
       if (!question) {
         document.getElementById("err-poll-q").textContent = "Please enter a question.";
         document.getElementById("poll-question-input").classList.add("invalid");
@@ -1766,6 +2137,7 @@
         document.getElementById("poll-question-input").classList.remove("invalid");
       }
 
+      // Validate options
       const filledLabels = optLabels.filter(l => l.length > 0);
       if (filledLabels.length < 2) {
         document.getElementById("err-poll-opts").textContent = "Please provide at least 2 options.";
@@ -1780,24 +2152,21 @@
       let polls = loadPollDefs();
 
       if (editingPollId) {
-        // Edit mode
         const idx = polls.findIndex(p => p.id === editingPollId);
         if (idx === -1) return;
         const existingOpts = polls[idx].options;
-        const newOpts = filledLabels.map((lbl, i) => {
-          const slug = lbl.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").slice(0, 20);
-          const existing = existingOpts[i];
-          return { id: existing?.id || `opt_${Date.now()}_${i}`, label: lbl };
-        });
-        polls[idx] = { ...polls[idx], question, options: newOpts };
+        const newOpts = filledLabels.map((lbl, i) => ({
+          id: existingOpts[i]?.id || `opt_${Date.now()}_${i}`,
+          label: lbl
+        }));
+        polls[idx] = { ...polls[idx], level: selectedLevel, question, options: newOpts };
       } else {
-        // Create mode
-        const newId = `poll_${Date.now()}`;
+        const newId  = `poll_${Date.now()}`;
         const newOpts = filledLabels.map((lbl, i) => ({
           id: `opt_${Date.now()}_${i}`,
           label: lbl
         }));
-        polls.push({ id: newId, question, options: newOpts });
+        polls.push({ id: newId, level: selectedLevel, question, options: newOpts });
       }
 
       savePollDefs(polls);
@@ -1806,17 +2175,12 @@
       renderStatsPanel();
       resetCreateForm();
 
-      // Show confirmation inline
       const btn = document.getElementById("save-poll-btn");
       const orig = btn.textContent;
       btn.textContent = "✓ Saved!";
       btn.style.background = "linear-gradient(135deg,#2a9d8f,#3dd6c8)";
-      setTimeout(() => {
-        btn.textContent = orig;
-        btn.style.background = "";
-      }, 1800);
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ""; }, 1800);
 
-      // Switch back to manage tab
       setTimeout(() => {
         document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
         document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
