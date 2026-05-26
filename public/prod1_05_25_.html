@@ -1153,11 +1153,6 @@
         <p class="register-sub">Join to share your opinion</p>
         <div class="field-group">
           <div class="field">
-            <label for="reg-name">Full Name</label>
-            <input type="text" id="reg-name" placeholder="Jane Smith" autocomplete="name" />
-            <span class="field-error" id="err-name"></span>
-          </div>
-          <div class="field">
             <label for="reg-email">Email Address</label>
             <input type="email" id="reg-email" placeholder="jane@example.com" autocomplete="email" />
             <span class="field-error" id="err-email"></span>
@@ -1166,18 +1161,6 @@
             <label for="reg-password">Password</label>
             <input type="password" id="reg-password" placeholder="At least 6 characters" autocomplete="new-password" />
             <span class="field-error" id="err-password"></span>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label for="reg-age">Age</label>
-              <input type="number" id="reg-age" placeholder="34" min="13" max="120" />
-              <span class="field-error" id="err-age"></span>
-            </div>
-            <div class="field">
-              <label for="reg-zip">ZIP Code</label>
-              <input type="text" id="reg-zip" placeholder="10001" maxlength="5" pattern="\d{5}" />
-              <span class="field-error" id="err-zip"></span>
-            </div>
           </div>
         </div>
         <div id="auth-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
@@ -1506,46 +1489,102 @@
     }
 
     // ══════════════════════════════════════════════════════════════
-    //  REGISTRATION
+    //  AUTH — TOGGLE FORMS
     // ══════════════════════════════════════════════════════════════
-    function validateAndRegister() {
-      const name  = document.getElementById("reg-name").value.trim();
-      const email = document.getElementById("reg-email").value.trim();
-      const age   = document.getElementById("reg-age").value.trim();
-      const zip   = document.getElementById("reg-zip").value.trim();
+    document.getElementById("show-login-link").addEventListener("click", () => {
+      document.getElementById("signup-form").style.display = "none";
+      document.getElementById("login-form").style.display = "block";
+    });
+    document.getElementById("show-signup-link").addEventListener("click", () => {
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("signup-form").style.display = "block";
+    });
+
+    // ══════════════════════════════════════════════════════════════
+    //  AUTH — SIGN UP
+    // ══════════════════════════════════════════════════════════════
+    async function validateAndRegister() {
+      const email    = document.getElementById("reg-email").value.trim();
+      const password = document.getElementById("reg-password").value.trim();
+      const authErr  = document.getElementById("auth-error");
+      authErr.style.display = "none";
       let valid = true;
 
-      if (!name) { setFieldError("name", "Please enter your full name."); valid = false; } else clearFieldError("name");
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email || !emailRe.test(email)) { setFieldError("email", "Please enter a valid email address."); valid = false; } else clearFieldError("email");
-      const ageNum = parseInt(age, 10);
-      if (!age || isNaN(ageNum) || ageNum < 13 || ageNum > 120) { setFieldError("age", "Age must be 13–120."); valid = false; } else clearFieldError("age");
-      const zipRe = /^\d{5}$/;
-      if (!zip || !zipRe.test(zip)) { setFieldError("zip", "Enter a valid 5-digit ZIP."); valid = false; } else clearFieldError("zip");
+      if (!email || !email.includes("@")) { setFieldError("email", "Please enter a valid email."); valid = false; } else clearFieldError("email");
+      if (!password || password.length < 6) { setFieldError("password", "Password must be at least 6 characters."); valid = false; } else clearFieldError("password");
       if (!valid) return;
 
-      const existing = JSON.parse(localStorage.getItem(KEY_USERS) || "[]");
-      const dupe = existing.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if (dupe) { setFieldError("email", "This email is already registered. Use 'Continue as returning user'."); return; }
+      const btn = document.getElementById("register-btn");
+      btn.disabled = true; btn.textContent = "Creating account…";
 
-      const user = { name, email, age: ageNum, zip, registeredAt: new Date().toISOString() };
-      existing.push(user);
-      localStorage.setItem("wtp_users", JSON.stringify(existing));
+      const { data, error } = await db.auth.signUp({ email, password });
+      if (error) {
+        authErr.textContent = error.message;
+        authErr.style.display = "block";
+        btn.disabled = false; btn.textContent = "Create Account →";
+        return;
+      }
+
+      await db.from("users").upsert({ email }, { onConflict: "email" });
+      const user = { name: email.split("@")[0], email, age: null, zip: "" };
       saveUser(user);
-      saveUserToSupabase(user);
       currentUser = user;
       showUserBanner(user);
       showScreen("polls");
       render();
+      btn.disabled = false; btn.textContent = "Create Account →";
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  AUTH — LOGIN
+    // ══════════════════════════════════════════════════════════════
+    async function loginUser() {
+      const email    = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+      const loginErr = document.getElementById("login-error");
+      loginErr.style.display = "none";
+
+      if (!email) { document.getElementById("err-login-email").textContent = "Please enter your email."; return; }
+      else document.getElementById("err-login-email").textContent = "";
+      if (!password) { document.getElementById("err-login-password").textContent = "Please enter your password."; return; }
+      else document.getElementById("err-login-password").textContent = "";
+
+      const btn = document.getElementById("login-btn");
+      btn.disabled = true; btn.textContent = "Signing in…";
+
+      const { data, error } = await db.auth.signInWithPassword({ email, password });
+      if (error) {
+        loginErr.textContent = error.message;
+        loginErr.style.display = "block";
+        btn.disabled = false; btn.textContent = "Sign In →";
+        return;
+      }
+
+      const { data: profile } = await db.from("users").select("*").eq("email", email).maybeSingle();
+      const user = profile
+        ? { name: profile.name, email: profile.email, age: profile.age, zip: profile.zip }
+        : { name: email.split("@")[0], email, age: null, zip: "" };
+
+      saveUser(user);
+      currentUser = user;
+      showUserBanner(user);
+      showScreen("polls");
+      await loadCountsFromSupabase();
+      render();
+      btn.disabled = false; btn.textContent = "Sign In →";
     }
 
     function setFieldError(field, msg) {
-      document.getElementById(`reg-${field}`).classList.add("invalid");
-      document.getElementById(`err-${field}`).textContent = msg;
+      const el = document.getElementById("reg-" + field);
+      if (el) el.classList.add("invalid");
+      const err = document.getElementById("err-" + field);
+      if (err) err.textContent = msg;
     }
     function clearFieldError(field) {
-      document.getElementById(`reg-${field}`).classList.remove("invalid");
-      document.getElementById(`err-${field}`).textContent = "";
+      const el = document.getElementById("reg-" + field);
+      if (el) el.classList.remove("invalid");
+      const err = document.getElementById("err-" + field);
+      if (err) err.textContent = "";
     }
 
     function skipToPolls() {
