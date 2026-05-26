@@ -1443,9 +1443,16 @@
           option_id: ans.ranked,
           answered_at: new Date().toISOString()
         };
-        if (userId) row.user_id = userId;
-        const { error } = await db.from("submissions").insert(row);
-        if (error) console.error("saveSubmission:", error);
+        if (userId) {
+          row.user_id = userId;
+          // Upsert — update if user already voted on this poll
+          const { error } = await db.from("submissions")
+            .upsert(row, { onConflict: "user_id,poll_id" });
+          if (error) console.error("saveSubmission:", error);
+        } else {
+          const { error } = await db.from("submissions").insert(row);
+          if (error) console.error("saveSubmission:", error);
+        }
       }
     }
 
