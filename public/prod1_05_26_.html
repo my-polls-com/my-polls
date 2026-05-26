@@ -1919,7 +1919,7 @@
         document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
         tab.classList.add("active");
         document.getElementById(`tab-${tab.dataset.tab}`).classList.add("active");
-        if (tab.dataset.tab === "stats")  renderStatsPanel();
+        if (tab.dataset.tab === "stats")  renderStatsPanel().catch(console.error);
         if (tab.dataset.tab === "polls")  renderPollsMgmt();
         if (tab.dataset.tab === "create") resetCreateForm();
       });
@@ -1929,33 +1929,34 @@
     //  ADMIN — RENDER DASHBOARD
     // ══════════════════════════════════════════════════════════════
     function renderAdminDashboard() {
-      renderStatsPanel();
+      renderStatsPanel().catch(console.error);
       renderPollsMgmt();
       resetCreateForm();
     }
 
     // ── Stats panel ───────────────────────────────────────────────
-    function renderStatsPanel() {
-      const allSubs  = JSON.parse(localStorage.getItem("wtp_all_submissions") || "[]");
-      const allUsers = JSON.parse(localStorage.getItem("wtp_users") || "[]");
-      const polls    = POLLS;
+    async function renderStatsPanel() {
+      const polls = POLLS;
+
+      // Load all submissions from Supabase
+      const { data: allSubs } = await db.from("submissions").select("*, poll_options(label), polls(question)").order("answered_at", { ascending: false });
+      const subs = allSubs || [];
+
+      // Load all users from Supabase
+      const { data: allUsers } = await db.from("users").select("*");
+      const users = allUsers || [];
 
       const grid = document.getElementById("admin-stats-grid");
-      const totalVotes = allSubs.length;
-      const avgAge = allSubs.length
-        ? Math.round(allSubs.reduce((s, sub) => s + (sub.user?.age || 0), 0) / allSubs.length)
-        : "—";
-      const uniqueZips = new Set(allSubs.map(s => s.user?.zip).filter(Boolean)).size;
       const nationalCount = polls.filter(p => (p.level||"national") === "national").length;
       const stateCount    = polls.filter(p => p.level === "state").length;
       const countyCount   = polls.filter(p => p.level === "county").length;
 
       grid.innerHTML = `
         <div class="stat-card"><div class="stat-val">${polls.length}</div><div class="stat-label">Active Polls</div></div>
-        <div class="stat-card"><div class="stat-val">${allUsers.length}</div><div class="stat-label">Registered Users</div></div>
-        <div class="stat-card"><div class="stat-val">${totalVotes}</div><div class="stat-label">Total Submissions</div></div>
-        <div class="stat-card"><div class="stat-val">${typeof avgAge === "number" ? avgAge : "—"}</div><div class="stat-label">Avg. Respondent Age</div></div>
-        <div class="stat-card"><div class="stat-val">${uniqueZips}</div><div class="stat-label">Unique ZIP Codes</div></div>
+        <div class="stat-card"><div class="stat-val">${users.length}</div><div class="stat-label">Registered Users</div></div>
+        <div class="stat-card"><div class="stat-val">${subs.length}</div><div class="stat-label">Total Submissions</div></div>
+        <div class="stat-card"><div class="stat-val">—</div><div class="stat-label">Avg. Respondent Age</div></div>
+        <div class="stat-card"><div class="stat-val">—</div><div class="stat-label">Unique ZIP Codes</div></div>
         <div class="stat-card">
           <div class="stat-val" style="font-size:1.1rem;display:flex;justify-content:center;gap:10px;align-items:baseline">
             <span style="color:#93c5fd">${nationalCount}</span>
@@ -1985,20 +1986,15 @@
 
         lvPolls.forEach(poll => {
           const agg = {};
-          poll.options.forEach(o => agg[o.id] = 0);
-          allSubs.forEach(sub => {
-            const ans = sub.answers?.find(a => a.pollId === poll.id);
-            if (ans?.ranked && agg[ans.ranked] !== undefined) agg[ans.ranked]++;
+          poll.options.forEach(o => { agg[o.id] = 0; });
+          subs.filter(s => s.poll_id === poll.id).forEach(s => {
+            if (agg[s.option_id] !== undefined) agg[s.option_id]++;
           });
           const total = Object.values(agg).reduce((s, v) => s + v, 0);
 
           const block = document.createElement("div");
           block.className = "stats-poll-block";
-          block.innerHTML = `
-            <div class="stats-poll-header">
-              <p class="stats-poll-question">${poll.question}</p>
-            </div>
-          `;
+          block.innerHTML = `<div class="stats-poll-header"><p class="stats-poll-question">${poll.question}</p></div>`;
           poll.options.forEach(opt => {
             const count = agg[opt.id] || 0;
             const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -2009,9 +2005,7 @@
                 <span>${opt.label}</span>
                 <span class="count">${count} <span style="color:rgba(245,240,232,0.35);font-weight:300">(${pct}%)</span></span>
               </div>
-              <div class="bar-track">
-                <div class="bar-fill" style="width:${pct}%"></div>
-              </div>
+              <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
             `;
             block.appendChild(row);
           });
@@ -2020,35 +2014,28 @@
       });
 
       // Submissions table
-      const tbody  = document.getElementById("submissions-tbody");
-      const thead  = document.querySelector("#submissions-table thead tr");
-      thead.innerHTML = `<th>#</th><th>Name</th><th>Age</th><th>ZIP</th><th>Submitted</th>` +
-        polls.map((p, i) => {
-          const lv = LEVELS.find(l => l.id === (p.level || "national"));
-          return `<th title="${p.question}">${lv?.icon || ""} Q${i+1}</th>`;
-        }).join("");
+      const tbody = document.getElementById("submissions-tbody");
+      const thead = document.querySelector("#submissions-table thead tr");
+      thead.innerHTML = `<th>#</th><th>Email</th><th>Poll</th><th>Answer</th><th>Answered At</th>`;
 
-      if (!allSubs.length) {
-        tbody.innerHTML = `<tr><td colspan="${5 + polls.length}" class="no-data">No submissions yet</td></tr>`;
+      if (!subs.length) {
+        tbody.innerHTML = `<tr><td colspan="5" class="no-data">No submissions yet</td></tr>`;
         return;
       }
       tbody.innerHTML = "";
-      [...allSubs].reverse().forEach((sub, idx) => {
-        const date = new Date(sub.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
+      subs.forEach((sub, idx) => {
+        const date = sub.answered_at
+          ? new Date(sub.answered_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+          : "—";
+        const poll = polls.find(p => p.id === sub.poll_id);
+        const opt  = poll?.options.find(o => o.id === sub.option_id);
         const tr   = document.createElement("tr");
-        const answerCells = polls.map(poll => {
-          const ans = sub.answers?.find(a => a.pollId === poll.id);
-          return ans?.rankedLabel
-            ? `<td><span class="badge-answer">${ans.rankedLabel}</span></td>`
-            : `<td style="opacity:.35">—</td>`;
-        }).join("");
         tr.innerHTML = `
-          <td style="opacity:.4">${allSubs.length - idx}</td>
-          <td>${sub.user?.name || "—"}</td>
-          <td>${sub.user?.age || "—"}</td>
-          <td>${sub.user?.zip || "—"}</td>
+          <td style="opacity:.4">${idx + 1}</td>
+          <td>${sub.user_id ? sub.user_id.substring(0,8) + "…" : "—"}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${poll?.question || "—"}</td>
+          <td><span class="badge-answer">${opt?.label || sub.option_id}</span></td>
           <td style="white-space:nowrap">${date}</td>
-          ${answerCells}
         `;
         tbody.appendChild(tr);
       });
@@ -2112,6 +2099,9 @@
 
     async function deletePoll(id) {
       if (!confirm("Delete this poll? This cannot be undone.")) return;
+      // Delete submissions and options first, then poll
+      await db.from("submissions").delete().eq("poll_id", id);
+      await db.from("poll_options").delete().eq("poll_id", id);
       const { error } = await db.from("polls").delete().eq("id", id);
       if (error) { console.error("deletePoll:", error); alert("Could not delete poll: " + error.message); return; }
       POLLS = await loadPollDefs();
@@ -2192,16 +2182,22 @@
       const row = document.createElement("div");
       row.className = "option-row";
       const idx = builder.children.length + 1;
-      row.innerHTML = `
-        <input type="text" placeholder="Option ${idx}" value="${value.replace(/"/g,'&quot;')}" />
-        <button class="remove-opt-btn" title="Remove option">×</button>
-      `;
-      row.querySelector(".remove-opt-btn").addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "Option " + idx;
+      input.value = value;
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "remove-opt-btn";
+      removeBtn.title = "Remove option";
+      removeBtn.textContent = "×";
+      removeBtn.addEventListener("click", () => {
         row.remove();
         syncRemoveButtons();
         syncAddButton();
         renumberPlaceholders();
       });
+      row.appendChild(input);
+      row.appendChild(removeBtn);
       builder.appendChild(row);
       syncRemoveButtons();
       syncAddButton();
