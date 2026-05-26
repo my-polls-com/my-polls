@@ -1444,6 +1444,8 @@
       loadAll();
       // Load polls from Supabase
       POLLS = await loadPollDefs();
+      // Load vote counts from Supabase
+      await loadCountsFromSupabase();
       if (currentUser) {
         showUserBanner(currentUser);
         showScreen("polls");
@@ -1451,6 +1453,24 @@
       } else {
         showScreen("register");
       }
+    }
+
+    async function loadCountsFromSupabase() {
+      const { data: subs, error } = await db.from("submissions").select("poll_id, option_id");
+      if (error) { console.error("loadCounts:", error); return; }
+      // Reset all counts
+      POLLS.forEach(p => {
+        if (!pollState[p.id]) pollState[p.id] = { ranked: null, counts: {} };
+        p.options.forEach(o => { pollState[p.id].counts[o.id] = 0; });
+      });
+      // Tally from Supabase
+      (subs || []).forEach(sub => {
+        const poll = POLLS.find(p => p.id === sub.poll_id);
+        if (!poll) return;
+        if (!pollState[sub.poll_id]) pollState[sub.poll_id] = { ranked: null, counts: {} };
+        if (!pollState[sub.poll_id].counts[sub.option_id]) pollState[sub.poll_id].counts[sub.option_id] = 0;
+        pollState[sub.poll_id].counts[sub.option_id]++;
+      });
     }
 
     // ══════════════════════════════════════════════════════════════
