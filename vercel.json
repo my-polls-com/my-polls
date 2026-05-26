@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/prod1_05_25_.html" }
+  ]
+}
