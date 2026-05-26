@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>We The People — Public Polls</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet" />
@@ -1329,16 +1330,20 @@
 
   <script>
     // ══════════════════════════════════════════════════════════════
+    //  SUPABASE CLIENT
+    // ══════════════════════════════════════════════════════════════
+    const SUPABASE_URL  = "https://zxriuxcysldyamgrsweh.supabase.co";
+    const SUPABASE_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4cml1eGN5c2xkeWFtZ3Jzd2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NTAsImV4cCI6MjA5NTI5ODY1MH0.mcFGkGblW0fcsaDVIFVIdtxlx0zKR2hdTd8_JEXkuPg";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ══════════════════════════════════════════════════════════════
     //  CONSTANTS & KEYS
     // ══════════════════════════════════════════════════════════════
     const ADMIN_PASSWORD = "admin123";   // ← change this
 
     const KEY_USER      = "wtp_user";
-    const KEY_POLLS_DEF = "wtp_polls_def";
     const KEY_POLLS     = "wtp_polls_v2";
     const KEY_SUBMITTED = "wtp_submitted";
-    const KEY_ALL_SUBS  = "wtp_all_submissions";
-    const KEY_USERS     = "wtp_users";
 
     // Level meta
     const LEVELS = [
@@ -1347,28 +1352,26 @@
       { id: "county",   label: "County",   icon: "🏘"  },
     ];
 
-    // ── Default polls ──────────────────────────────────────────────
-    // All polls are created via Admin Dashboard
-    const DEFAULT_POLLS = [];
+    // ══════════════════════════════════════════════════════════════
+    //  POLL DEFINITIONS — loaded from Supabase
+    // ══════════════════════════════════════════════════════════════
+    let POLLS = [];
 
-    // ══════════════════════════════════════════════════════════════
-    //  POLL DEFINITIONS (runtime + persistence)
-    // ══════════════════════════════════════════════════════════════
-    function loadPollDefs() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(KEY_POLLS_DEF) || "null");
-        if (Array.isArray(saved) && saved.length) {
-          // Back-fill level for old polls that don't have it
-          return saved.map(p => ({ level: "national", ...p }));
-        }
-        return JSON.parse(JSON.stringify(DEFAULT_POLLS));
-      } catch { return JSON.parse(JSON.stringify(DEFAULT_POLLS)); }
-    }
-    function savePollDefs(defs) {
-      localStorage.setItem(KEY_POLLS_DEF, JSON.stringify(defs));
+    async function loadPollDefs() {
+      const { data: pollRows, error } = await db.from("polls").select("*").order("created_at");
+      if (error) { console.error("loadPollDefs:", error); return []; }
+      const { data: optRows } = await db.from("poll_options").select("*");
+      return pollRows.map(p => ({
+        id: p.id,
+        level: p.level || "national",
+        question: p.question,
+        options: (optRows || []).filter(o => o.poll_id === p.id)
+      }));
     }
 
-    let POLLS = loadPollDefs();
+    async function savePollDefs(polls) {
+      // No-op: polls are saved individually via savePollToSupabase
+    }
 
     // ══════════════════════════════════════════════════════════════
     //  APP STATE
@@ -1390,6 +1393,43 @@
     function savePollState()  { localStorage.setItem(KEY_POLLS, JSON.stringify(pollState)); }
     function saveSubmitted(v) { localStorage.setItem(KEY_SUBMITTED, JSON.stringify(v)); }
 
+    // ── Supabase: save a poll + options ───────────────────────────
+    async function savePollToSupabase(poll) {
+      const { error: pe } = await db.from("polls").upsert({
+        id: poll.id, question: poll.question, level: poll.level
+      });
+      if (pe) { console.error("savePoll:", pe); return false; }
+      // Delete old options then re-insert
+      await db.from("poll_options").delete().eq("poll_id", poll.id);
+      const opts = poll.options.map(o => ({ id: o.id, poll_id: poll.id, label: o.label }));
+      const { error: oe } = await db.from("poll_options").insert(opts);
+      if (oe) { console.error("saveOpts:", oe); return false; }
+      return true;
+    }
+
+    async function deletePollFromSupabase(id) {
+      await db.from("polls").delete().eq("id", id);
+    }
+
+    // ── Supabase: save user ───────────────────────────────────────
+    async function saveUserToSupabase(user) {
+      const { error } = await db.from("users").upsert({
+        name: user.name, email: user.email, age: user.age, zip: user.zip
+      }, { onConflict: "email" });
+      if (error) console.error("saveUser:", error);
+    }
+
+    // ── Supabase: save submission ─────────────────────────────────
+    async function saveSubmissionToSupabase(userId, answers) {
+      for (const ans of answers) {
+        if (!ans.ranked) continue;
+        const { error } = await db.from("submissions").insert({
+          user_id: userId, poll_id: ans.pollId, option_id: ans.ranked
+        });
+        if (error) console.error("saveSubmission:", error);
+      }
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  ROUTING
     // ══════════════════════════════════════════════════════════════
@@ -1400,8 +1440,10 @@
       document.getElementById("user-banner").style.display     = name === "polls"    ? "flex"  : "none";
     }
 
-    function init() {
+    async function init() {
       loadAll();
+      // Load polls from Supabase
+      POLLS = await loadPollDefs();
       if (currentUser) {
         showUserBanner(currentUser);
         showScreen("polls");
@@ -1436,8 +1478,9 @@
 
       const user = { name, email, age: ageNum, zip, registeredAt: new Date().toISOString() };
       existing.push(user);
-      localStorage.setItem(KEY_USERS, JSON.stringify(existing));
+      localStorage.setItem("wtp_users", JSON.stringify(existing));
       saveUser(user);
+      saveUserToSupabase(user);
       currentUser = user;
       showUserBanner(user);
       showScreen("polls");
@@ -1694,10 +1737,15 @@
       };
 
       try {
-        const all = JSON.parse(localStorage.getItem(KEY_ALL_SUBS) || "[]");
+        const all = JSON.parse(localStorage.getItem("wtp_all_submissions") || "[]");
         all.push({ key: `wtp_${Date.now()}`, ...submission });
-        localStorage.setItem(KEY_ALL_SUBS, JSON.stringify(all));
+        localStorage.setItem("wtp_all_submissions", JSON.stringify(all));
         localStorage.setItem("wtp_latest_submission", JSON.stringify(submission));
+        // Save to Supabase
+        const { data: userData } = await db.from("users").select("id").eq("email", currentUser.email).single();
+        if (userData?.id) {
+          await saveSubmissionToSupabase(userData.id, submission.answers);
+        }
         submitted = true; saveSubmitted(true); savePollState();
         render();
         btn.textContent      = "✓ Rankings Submitted";
@@ -1788,9 +1836,9 @@
 
     // ── Stats panel ───────────────────────────────────────────────
     function renderStatsPanel() {
-      const allSubs  = JSON.parse(localStorage.getItem(KEY_ALL_SUBS) || "[]");
-      const allUsers = JSON.parse(localStorage.getItem(KEY_USERS) || "[]");
-      const polls    = loadPollDefs();
+      const allSubs  = JSON.parse(localStorage.getItem("wtp_all_submissions") || "[]");
+      const allUsers = JSON.parse(localStorage.getItem("wtp_users") || "[]");
+      const polls    = POLLS;
 
       const grid = document.getElementById("admin-stats-grid");
       const totalVotes = allSubs.length;
@@ -1908,8 +1956,8 @@
 
     // ── Polls management ──────────────────────────────────────────
     function renderPollsMgmt() {
-      const polls   = loadPollDefs();
-      const allSubs = JSON.parse(localStorage.getItem(KEY_ALL_SUBS) || "[]");
+      const polls   = POLLS;
+      const allSubs = JSON.parse(localStorage.getItem("wtp_all_submissions") || "[]");
       const list    = document.getElementById("polls-mgmt-list");
       list.innerHTML = "";
 
@@ -1962,12 +2010,10 @@
       });
     }
 
-    function deletePoll(id) {
+    async function deletePoll(id) {
       if (!confirm("Delete this poll? This cannot be undone.")) return;
-      let polls = loadPollDefs();
-      polls = polls.filter(p => p.id !== id);
-      savePollDefs(polls);
-      POLLS = polls;
+      await deletePollFromSupabase(id);
+      POLLS = await loadPollDefs();
       renderPollsMgmt();
       renderStatsPanel();
     }
@@ -2008,7 +2054,7 @@
     }
 
     function startEditPoll(id) {
-      const polls = loadPollDefs();
+      const polls = POLLS;
       const poll  = polls.find(p => p.id === id);
       if (!poll) return;
 
@@ -2079,7 +2125,7 @@
 
     document.getElementById("cancel-edit-btn").addEventListener("click", resetCreateForm);
 
-    document.getElementById("save-poll-btn").addEventListener("click", () => {
+    document.getElementById("save-poll-btn").addEventListener("click", async () => {
       const question  = document.getElementById("poll-question-input").value.trim();
       const optInputs = [...document.querySelectorAll("#options-builder .option-row input")];
       const optLabels = optInputs.map(i => i.value.trim());
@@ -2119,7 +2165,7 @@
 
       if (!valid) return;
 
-      let polls = loadPollDefs();
+      let polls = [...POLLS];
 
       if (editingPollId) {
         const idx = polls.findIndex(p => p.id === editingPollId);
@@ -2139,8 +2185,12 @@
         polls.push({ id: newId, level: selectedLevel, question, options: newOpts });
       }
 
-      savePollDefs(polls);
-      POLLS = polls;
+      // Save to Supabase
+      const pollToSave = editingPollId
+        ? polls.find(p => p.id === editingPollId)
+        : polls[polls.length - 1];
+      await savePollToSupabase(pollToSave);
+      POLLS = await loadPollDefs();
       renderPollsMgmt();
       renderStatsPanel();
       resetCreateForm();
