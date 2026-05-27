@@ -1735,8 +1735,7 @@
             const btn     = document.createElement("button");
             btn.className = "rank-btn" + (ps.ranked === opt.id ? " selected" : "");
             btn.textContent = opt.label;
-            // allow changing answer even after submit
-            else { btn.addEventListener("click", () => castRank(poll.id, opt.id, poll.options)); }
+            btn.addEventListener("click", () => castRank(poll.id, opt.id, poll.options));
             optsEl.appendChild(btn);
           });
 
