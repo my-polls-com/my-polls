@@ -2276,8 +2276,12 @@
     document.getElementById("level-picker").addEventListener("click", e => {
       const btn = e.target.closest(".level-pick-btn");
       if (!btn) return;
-      setSelectedLevel(btn.dataset.level);
+      const level = btn.dataset.level;
+      setSelectedLevel(level);
       document.getElementById("err-poll-level").textContent = "";
+      // Show/hide location fields
+      document.getElementById("field-state").style.display  = (level === "state" || level === "county") ? "" : "none";
+      document.getElementById("field-county").style.display = level === "county" ? "" : "none";
     });
 
     function resetCreateForm() {
