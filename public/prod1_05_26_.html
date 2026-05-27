@@ -1725,8 +1725,7 @@
               <p class="results-label">Results</p>
               <div id="bars-${poll.id}"></div>
               <p class="total-rankings">${total} ranking${total !== 1 ? "s" : ""} cast</p>
-              ${hasRanked && !submitted ? `<p class="ranked-notice">✓ Ranked · change before submitting</p>` : ""}
-              ${hasRanked &&  submitted ? `<p class="ranked-notice">✓ Your ranking is locked in</p>` : ""}
+              ${hasRanked ? `<p class="ranked-notice">✓ Ranked${submitted ? " · change answer and resubmit" : " · change before submitting"}</p>` : ""}
             </div>
           `;
           pollsEl.appendChild(card);
@@ -1736,7 +1735,7 @@
             const btn     = document.createElement("button");
             btn.className = "rank-btn" + (ps.ranked === opt.id ? " selected" : "");
             btn.textContent = opt.label;
-            if (submitted) { btn.disabled = true; }
+            // allow changing answer even after submit
             else { btn.addEventListener("click", () => castRank(poll.id, opt.id, poll.options)); }
             optsEl.appendChild(btn);
           });
@@ -1786,9 +1785,9 @@
       const total    = POLLS.length;
 
       if (submitted) {
-        btn.disabled       = true;
-        btn.textContent    = "✓ Rankings Submitted";
-        progText.innerHTML = `All <span>${total}</span> rankings submitted & saved`;
+        btn.disabled       = false;
+        btn.textContent    = "Update My Rankings →";
+        progText.innerHTML = `All <span>${total}</span> rankings submitted · update anytime`;
         return;
       }
       if (anyAnswered()) {
@@ -1820,45 +1819,35 @@
     //  SUBMIT
     // ══════════════════════════════════════════════════════════════
     document.getElementById("submit-button").addEventListener("click", async () => {
-      if (!anyAnswered() || submitted) return;
+      if (!anyAnswered()) return;
       const btn    = document.getElementById("submit-button");
       const banner = document.getElementById("status-banner");
       btn.disabled = true; btn.textContent = "Submitting…";
       banner.style.display = "none"; banner.className = "";
 
-      const submission = {
-        submittedAt: new Date().toISOString(),
-        user: currentUser,
-        answers: POLLS.map(p => ({
-          pollId:      p.id,
-          level:       p.level || "national",
-          question:    p.question,
-          ranked:      pollState[p.id]?.ranked || null,
-          rankedLabel: p.options.find(o => o.id === pollState[p.id]?.ranked)?.label || "",
-          counts:      pollState[p.id]?.counts || {},
-        }))
-      };
+      const answers = POLLS.map(p => ({
+        pollId:      p.id,
+        level:       p.level || "national",
+        question:    p.question,
+        ranked:      pollState[p.id]?.ranked || null,
+        rankedLabel: p.options.find(o => o.id === pollState[p.id]?.ranked)?.label || "",
+      })).filter(a => a.ranked);
 
       try {
-        const all = JSON.parse(localStorage.getItem("wtp_all_submissions") || "[]");
-        all.push({ key: `wtp_${Date.now()}`, ...submission });
-        localStorage.setItem("wtp_all_submissions", JSON.stringify(all));
-        localStorage.setItem("wtp_latest_submission", JSON.stringify(submission));
         // Save to Supabase
-        try {
-          const { data: sessionData } = await db.auth.getSession();
-          const userId = sessionData?.session?.user?.id || null;
-          await saveSubmissionToSupabase(userId, submission.answers);
-        } catch(e) {
-          console.error("submission error:", e);
-          await saveSubmissionToSupabase(null, submission.answers);
-        }
+        const { data: sessionData } = await db.auth.getSession();
+        const userId = sessionData?.session?.user?.id || null;
+        await saveSubmissionToSupabase(userId, answers);
+
+        // Reload counts from Supabase so stats update immediately
+        await loadCountsFromSupabase();
         submitted = true; saveSubmitted(true); savePollState();
         render();
         btn.textContent      = "✓ Rankings Submitted";
         banner.style.display = "block"; banner.className = "success";
-        banner.textContent   = "🗳  Your rankings have been saved. Thank you, " + (currentUser?.name?.split(" ")[0] || "friend") + "!";
+        banner.textContent   = "🗳  Your rankings have been saved. Thank you!";
       } catch (err) {
+        console.error("submit error:", err);
         btn.disabled = false; btn.textContent = "Submit My Rankings →";
         banner.style.display = "block"; banner.className = "error";
         banner.textContent = "⚠️  Something went wrong. Please try again.";
