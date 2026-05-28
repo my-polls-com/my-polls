@@ -1,0 +1,54 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//AddCal-1.0//EN
+BEGIN:VTIMEZONE
+TZID:America/Los_Angeles
+BEGIN:STANDARD
+DTSTART:20251102T020000
+TZOFFSETFROM:-0700
+TZOFFSETTO:-0800
+END:STANDARD
+BEGIN:DAYLIGHT
+DTSTART:20260308T020000
+TZOFFSETFROM:-0800
+TZOFFSETTO:-0700
+END:DAYLIGHT
+BEGIN:STANDARD
+DTSTART:20261101T020000
+TZOFFSETFROM:-0700
+TZOFFSETTO:-0800
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VTIMEZONE
+TZID:UTC
+BEGIN:STANDARD
+DTSTART:20250831T174147
+TZOFFSETFROM:+0000
+TZOFFSETTO:+0000
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:evt_2mdg011ruohr
+DTSTAMP:20260528T174147Z
+DTSTART;TZID=America/Los_Angeles:20260604T090000
+DTEND;TZID=America/Los_Angeles:20260604T160000
+SUMMARY:Snowflake Dev Day
+DESCRIPTION:You're all set for Snowflake Dev Day! We're excited to have you
+  join us for a day filled with coding\, creativity\, and networking. Get r
+ eady to explore the innovations and hear from experts in data\, applicatio
+ ns\, and AI.\n\n----\nShared with addcal.co
+LOCATION:Moscone Center\, 747 Howard St.\, San Francisco\, CA 94103
+STATUS:CONFIRMED
+X-ALT-DESC;FMTTYPE=text/html:<p>You're all set for Snowflake Dev Day! We're
+  excited to have you join us for a day filled with coding\, creativity\, a
+ nd networking. Get ready to explore the innovations and hear from experts 
+ in data\, applications\, and AI.</p><br><br>----<br>Shared with <a href=\"
+ https://addcal.co/?utm_campaign=evt_sig\">addcal.co</a>
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT30M
+DESCRIPTION:Reminder
+END:VALARM
+END:VEVENT
+END:VCALENDAR
