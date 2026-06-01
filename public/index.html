@@ -1484,13 +1484,6 @@
     }
 
     // ── Supabase: save user ───────────────────────────────────────
-    async function saveUserToSupabase(user) {
-      const { error } = await db.from("users").upsert({
-        name: user.name, email: user.email, age: user.age, zip: user.zip
-      }, { onConflict: "email" });
-      if (error) console.error("saveUser:", error);
-    }
-
     // ── Supabase: save submission ─────────────────────────────────
     async function saveSubmissionToSupabase(userId, answers) {
       for (const ans of answers) {
@@ -1526,40 +1519,6 @@
     // ══════════════════════════════════════════════════════════════
     //  ZIP CODE LOOKUP
     // ══════════════════════════════════════════════════════════════
-    let userLocation = { zip: "", state: "", stateCode: "", county: "" };
-
-    async function lookupZip(zip) {
-      if (!zip || zip.length !== 5) return null;
-      try {
-        const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        const place = data.places[0];
-        return {
-          zip,
-          state: place["state"],
-          stateCode: place["state abbreviation"],
-          county: place["place name"]
-        };
-      } catch { return null; }
-    }
-
-    document.getElementById("reg-zip").addEventListener("blur", async () => {
-      const zip = document.getElementById("reg-zip").value.trim();
-      const result = document.getElementById("zip-lookup-result");
-      if (zip.length === 5) {
-        result.textContent = "Looking up…";
-        const loc = await lookupZip(zip);
-        if (loc) {
-          result.textContent = `📍 ${loc.county}, ${loc.state}`;
-          userLocation = loc;
-        } else {
-          result.textContent = "ZIP not found — please check";
-          result.style.color = "#f87171";
-        }
-      }
-    });
-
     // ══════════════════════════════════════════════════════════════
     //  STATE FIPS MAP + COUNTY LOADER
     // ══════════════════════════════════════════════════════════════
@@ -1718,20 +1677,6 @@
     // ══════════════════════════════════════════════════════════════
     //  AUTH — SIGN UP
     // ══════════════════════════════════════════════════════════════
-    async function lookupZip(zip) {
-      if (!zip || zip.length !== 5) return null;
-      try {
-        const res = await fetch(`https://api.zippopotam.us/us/${zip}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return {
-          state: data.places[0]["state abbreviation"],
-          stateName: data.places[0]["state"],
-          county: data.places[0]["place name"]
-        };
-      } catch { return null; }
-    }
-
     // ZIP live lookup on input — uses local ZIP→county data
     document.getElementById("reg-zip").addEventListener("input", async function() {
       const zip = this.value.trim();
