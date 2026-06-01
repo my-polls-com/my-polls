@@ -1626,10 +1626,35 @@
 
     async function init() {
       loadAll();
-      // Load polls from Supabase
+
+      // If there's an active Supabase session, refresh the user profile
+      // from the database so location (stateCode/county) is always current.
+      try {
+        const { data: sessionData } = await db.auth.getSession();
+        const sessionUser = sessionData?.session?.user;
+        if (sessionUser?.email) {
+          const { data: profile } = await db.from("users").select("*").eq("email", sessionUser.email).maybeSingle();
+          if (profile) {
+            currentUser = {
+              name: profile.name || profile.email.split("@")[0],
+              email: profile.email,
+              zip: profile.zip,
+              stateCode: profile.state,
+              stateName: profile.state_name,
+              county: profile.county
+            };
+            saveUser(currentUser);
+          }
+        } else {
+          // No active session — clear any stale local user
+          currentUser = null;
+        }
+      } catch (e) { console.error("init session check:", e); }
+
+      // Load polls and counts from Supabase
       POLLS = await loadPollDefs();
-      // Load vote counts from Supabase
       await loadCountsFromSupabase();
+
       if (currentUser) {
         showUserBanner(currentUser);
         showScreen("polls");
@@ -1640,21 +1665,42 @@
     }
 
     async function loadCountsFromSupabase() {
-      const { data: subs, error } = await db.from("submissions").select("poll_id, option_id");
+      // Load ALL submissions (for global counts) and the current user's own votes
+      const { data: subs, error } = await db.from("submissions").select("poll_id, option_id, user_id");
       if (error) { console.error("loadCounts:", error); return; }
-      // Reset all counts
+
+      // Get current user's auth id so we can restore their own selections
+      let myUserId = null;
+      try {
+        const { data: sessionData } = await db.auth.getSession();
+        myUserId = sessionData?.session?.user?.id || null;
+      } catch (e) { /* ignore */ }
+
+      // Reset all counts (preserve nothing — we rebuild from DB)
       POLLS.forEach(p => {
         if (!pollState[p.id]) pollState[p.id] = { ranked: null, counts: {} };
+        pollState[p.id].ranked = null;
         p.options.forEach(o => { pollState[p.id].counts[o.id] = 0; });
       });
-      // Tally from Supabase
+
+      let userHasVoted = false;
+
+      // Tally global counts and capture this user's own picks
       (subs || []).forEach(sub => {
         const poll = POLLS.find(p => p.id === sub.poll_id);
         if (!poll) return;
         if (!pollState[sub.poll_id]) pollState[sub.poll_id] = { ranked: null, counts: {} };
         if (!pollState[sub.poll_id].counts[sub.option_id]) pollState[sub.poll_id].counts[sub.option_id] = 0;
         pollState[sub.poll_id].counts[sub.option_id]++;
+        // Restore this user's own selection
+        if (myUserId && sub.user_id === myUserId) {
+          pollState[sub.poll_id].ranked = sub.option_id;
+          userHasVoted = true;
+        }
       });
+
+      // If the user has already voted on at least one poll, mark as submitted
+      if (userHasVoted) { submitted = true; saveSubmitted(true); }
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -2029,15 +2075,11 @@
     }
 
     function castRank(pollId, optId, options) {
-      if (submitted) return;
       const ps = getOrInitPoll(pollId, options);
-      if (ps.ranked !== null && ps.ranked !== optId) {
-        ps.counts[ps.ranked] = Math.max(0, (ps.counts[ps.ranked] || 0) - 1);
-      }
-      if (ps.ranked !== optId) {
-        ps.counts[optId] = (ps.counts[optId] || 0) + 1;
-        ps.ranked = optId;
-      }
+      // Only update the local "ranked" selection here.
+      // The real counts come from Supabase after submit, so we don't
+      // hand-adjust counts (that caused the add-then-revert bug).
+      ps.ranked = (ps.ranked === optId) ? null : optId;
       savePollState();
       render();
     }
@@ -2066,13 +2108,14 @@
         const userId = sessionData?.session?.user?.id || null;
         await saveSubmissionToSupabase(userId, answers);
 
-        // Reload counts from Supabase so stats update immediately
+        // Reload counts from Supabase (this also restores the user's own picks)
         await loadCountsFromSupabase();
         submitted = true; saveSubmitted(true); savePollState();
         render();
-        btn.textContent      = "✓ Rankings Submitted";
+        btn.disabled         = false;
+        btn.textContent      = "Update My Rankings →";
         banner.style.display = "block"; banner.className = "success";
-        banner.textContent   = "🗳  Your rankings have been saved. Thank you!";
+        banner.textContent   = "🗳  Your rankings have been saved. You can change them anytime.";
       } catch (err) {
         console.error("submit error:", err);
         btn.disabled = false; btn.textContent = "Submit My Rankings →";
@@ -2081,13 +2124,31 @@
       }
     });
 
-    document.getElementById("reset-button").addEventListener("click", () => {
-      pollState = {}; submitted = false;
-      localStorage.removeItem(KEY_POLLS);
-      localStorage.removeItem(KEY_SUBMITTED);
-      const banner = document.getElementById("status-banner");
-      banner.style.display = "none"; banner.className = "";
-      render();
+    document.getElementById("reset-button").addEventListener("click", async () => {
+      if (!confirm("Clear your own answers for all polls? This removes only YOUR responses so you can vote again. Other people's responses are not affected.")) return;
+      const btn = document.getElementById("reset-button");
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = "Clearing…";
+      try {
+        const { data: sessionData } = await db.auth.getSession();
+        const userId = sessionData?.session?.user?.id || null;
+        if (userId) {
+          const { error } = await db.from("submissions").delete().eq("user_id", userId);
+          if (error) { console.error("reset:", error); alert("Could not clear your answers: " + error.message); btn.disabled = false; btn.textContent = orig; return; }
+        }
+        // Reset local state
+        submitted = false; saveSubmitted(false);
+        localStorage.removeItem(KEY_POLLS);
+        // Reload counts (will show your picks cleared, others intact)
+        await loadCountsFromSupabase();
+        // loadCounts may set submitted=true if other rows exist for user (none now)
+        submitted = false; saveSubmitted(false);
+        const banner = document.getElementById("status-banner");
+        banner.style.display = "none"; banner.className = "";
+        render();
+      } finally {
+        btn.disabled = false; btn.textContent = orig;
+      }
     });
 
     // ══════════════════════════════════════════════════════════════
