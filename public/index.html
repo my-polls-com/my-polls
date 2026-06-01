@@ -1570,6 +1570,42 @@
       return COUNTIES_BY_STATE[stateCode] || [];
     }
 
+    // State code → full name
+    const STATE_NAMES = {
+      AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",
+      CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",
+      HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",
+      LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",
+      MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",
+      NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",
+      OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",
+      SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",
+      WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"
+    };
+
+    // ZIP → [county, stateCode] lookup, loaded once from repo file
+    let ZIP_DATA = null;
+    async function ensureZipData() {
+      if (ZIP_DATA) return ZIP_DATA;
+      try {
+        const res = await fetch("/zip_lookup.json");
+        ZIP_DATA = await res.json();
+      } catch (e) {
+        console.error("Could not load ZIP data:", e);
+        ZIP_DATA = {};
+      }
+      return ZIP_DATA;
+    }
+
+    // Resolve a ZIP to { zip, county, stateCode, stateName }
+    async function resolveZip(zip) {
+      if (!zip || zip.length !== 5) return null;
+      const data = await ensureZipData();
+      const rec = data[zip];
+      if (!rec) return null;
+      return { zip, county: rec[0], stateCode: rec[1], stateName: STATE_NAMES[rec[1]] || rec[1] };
+    }
+
     // When state changes, populate counties instantly
     document.getElementById("poll-state-select").addEventListener("change", () => {
       const stateVal  = document.getElementById("poll-state-select").value;
@@ -1650,15 +1686,15 @@
       } catch { return null; }
     }
 
-    // ZIP live lookup on input
+    // ZIP live lookup on input — uses local ZIP→county data
     document.getElementById("reg-zip").addEventListener("input", async function() {
       const zip = this.value.trim();
       const status = document.getElementById("zip-lookup-status");
       if (zip.length === 5) {
         status.textContent = "Looking up…";
-        const loc = await lookupZip(zip);
+        const loc = await resolveZip(zip);
         if (loc) {
-          status.textContent = `📍 ${loc.county}, ${loc.stateName}`;
+          status.textContent = `📍 ${loc.county} County, ${loc.stateName}`;
           clearFieldError("zip");
         } else {
           status.textContent = "ZIP not found — please check";
@@ -1684,9 +1720,9 @@
       const btn = document.getElementById("register-btn");
       btn.disabled = true; btn.textContent = "Creating account…";
 
-      // Lookup ZIP
+      // Lookup ZIP using local data
       btn.textContent = "Looking up location…";
-      const loc = await lookupZip(zip);
+      const loc = await resolveZip(zip);
       if (!loc) {
         document.getElementById("err-zip").textContent = "Could not find this ZIP code. Please check and try again.";
         btn.disabled = false; btn.textContent = "Create Account →";
@@ -1703,12 +1739,12 @@
 
       await db.from("users").upsert({
         email, zip,
-        state: loc.state,
+        state: loc.stateCode,
         state_name: loc.stateName,
         county: loc.county
       }, { onConflict: "email" });
 
-      const user = { name: email.split("@")[0], email, zip, state: loc.state, stateName: loc.stateName, county: loc.county };
+      const user = { name: email.split("@")[0], email, zip, stateCode: loc.stateCode, stateName: loc.stateName, county: loc.county };
       saveUser(user);
       currentUser = user;
       showUserBanner(user);
@@ -1746,8 +1782,8 @@
 
       const { data: profile } = await db.from("users").select("*").eq("email", email).maybeSingle();
       const user = profile
-        ? { name: profile.name || email.split("@")[0], email: profile.email, zip: profile.zip, state: profile.state, stateName: profile.state_name, county: profile.county }
-        : { name: email.split("@")[0], email, zip: "", state: null, stateName: null, county: null };
+        ? { name: profile.name || email.split("@")[0], email: profile.email, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county }
+        : { name: email.split("@")[0], email, zip: "", stateCode: null, stateName: null, county: null };
 
       saveUser(user);
       currentUser = user;
@@ -1867,11 +1903,18 @@
       levelsToShow.forEach(lv => {
         let levelPolls = POLLS.filter(p => (p.level || "national") === lv.id);
         // Filter by user location
-        if (lv.id === "state" && currentUser?.stateCode) {
-          levelPolls = levelPolls.filter(p => !p.stateCode || p.stateCode === currentUser.stateCode);
+        if (lv.id === "state") {
+          // Only show state polls matching the user's state
+          levelPolls = levelPolls.filter(p => p.stateCode && currentUser?.stateCode && p.stateCode === currentUser.stateCode);
         }
-        if (lv.id === "county" && currentUser?.county) {
-          levelPolls = levelPolls.filter(p => !p.county || (p.county === currentUser.county && p.stateCode === currentUser.stateCode));
+        if (lv.id === "county") {
+          // Only show county polls matching the user's county + state
+          levelPolls = levelPolls.filter(p =>
+            p.county && p.stateCode &&
+            currentUser?.county && currentUser?.stateCode &&
+            p.county === currentUser.county &&
+            p.stateCode === currentUser.stateCode
+          );
         }
         if (!levelPolls.length) return;
         anyVisible = true;
