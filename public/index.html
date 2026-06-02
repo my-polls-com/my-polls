@@ -1592,7 +1592,7 @@
         const { data: sessionData } = await db.auth.getSession();
         const sessionUser = sessionData?.session?.user;
         if (sessionUser?.email) {
-          const { data: profile } = await db.from("users").select("*").eq("email", sessionUser.email).maybeSingle();
+          const { data: profile } = await db.from("users").select("*").ilike("email", (sessionUser.email||"").toLowerCase()).maybeSingle();
           if (profile) {
             currentUser = {
               name: profile.name || profile.email.split("@")[0],
@@ -1728,14 +1728,24 @@
         return;
       }
 
-      await db.from("users").upsert({
-        email, zip,
+      const emailLower = email.toLowerCase();
+      const { error: upsertErr } = await db.from("users").upsert({
+        email: emailLower,
+        name: emailLower.split("@")[0],
+        zip,
         state: loc.stateCode,
         state_name: loc.stateName,
         county: loc.county
       }, { onConflict: "email" });
+      if (upsertErr) {
+        console.error("users upsert failed:", upsertErr);
+        authErr.textContent = "Could not save your profile: " + upsertErr.message;
+        authErr.style.display = "block";
+        btn.disabled = false; btn.textContent = "Create Account →";
+        return;
+      }
 
-      const user = { name: email.split("@")[0], email, zip, stateCode: loc.stateCode, stateName: loc.stateName, county: loc.county };
+      const user = { name: emailLower.split("@")[0], email: emailLower, zip, stateCode: loc.stateCode, stateName: loc.stateName, county: loc.county };
       saveUser(user);
       currentUser = user;
       showUserBanner(user);
@@ -1771,10 +1781,17 @@
         return;
       }
 
-      const { data: profile } = await db.from("users").select("*").eq("email", email).maybeSingle();
+      // Use the authenticated user's email (Supabase lowercases it) for the lookup
+      const authEmail = (data?.user?.email || email).toLowerCase();
+      let { data: profile } = await db.from("users").select("*").ilike("email", authEmail).maybeSingle();
+      // Fallback: try the typed email if the auth email didn't match
+      if (!profile) {
+        const r = await db.from("users").select("*").ilike("email", email.toLowerCase()).maybeSingle();
+        profile = r.data;
+      }
       const user = profile
-        ? { name: profile.name || email.split("@")[0], email: profile.email, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county }
-        : { name: email.split("@")[0], email, zip: "", stateCode: null, stateName: null, county: null };
+        ? { name: profile.name || authEmail.split("@")[0], email: profile.email, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county }
+        : { name: authEmail.split("@")[0], email: authEmail, zip: "", stateCode: null, stateName: null, county: null };
 
       saveUser(user);
       currentUser = user;
