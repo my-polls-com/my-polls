@@ -24,8 +24,8 @@ export async function POST(request) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/index.html?verified=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/index.html?verified=cancelled`,
+      success_url: `${origin}/?verified=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/?verified=cancelled`,
     });
 
     return Response.json({ url: session.url });
