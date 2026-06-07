@@ -1,22 +1,19 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// Server-side Supabase client using the anon key
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
 export async function POST(request) {
   try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
     const { session_id, email } = await request.json();
     if (!session_id) {
       return Response.json({ error: "Missing session_id" }, { status: 400 });
     }
 
-    // Retrieve the checkout session, expanding the payment method details
     const session = await stripe.checkout.sessions.retrieve(session_id, {
       expand: ["payment_intent.payment_method"],
     });
@@ -33,7 +30,6 @@ export async function POST(request) {
       return Response.json({ error: "Could not read card details." }, { status: 400 });
     }
 
-    // ── Verification rules ─────────────────────────────────
     if (card.funding === "prepaid") {
       return Response.json({ error: "Prepaid cards are not accepted." }, { status: 403 });
     }
@@ -44,7 +40,6 @@ export async function POST(request) {
     const fingerprint = card.fingerprint;
     const zip = billing.address?.postal_code || null;
 
-    // ── Layer 1: one card = one account ────────────────────
     if (fingerprint) {
       const { data: existing } = await supabase
         .from("users")
