@@ -1,13 +1,13 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
+const SUPABASE_URL = "https://zxriuxcysldyamgrsweh.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4cml1eGN5c2xkeWFtZ3Jzd2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjI2NTAsImV4cCI6MjA5NTI5ODY1MH0.mcFGkGblW0fcsaDVIFVIdtxlx0zKR2hdTd8_JEXkuPg";
+
 export async function POST(request) {
   try {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const { session_id, email } = await request.json();
     if (!session_id) {
