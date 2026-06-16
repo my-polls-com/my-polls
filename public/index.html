@@ -1214,7 +1214,7 @@
           </div>
         </div>
         <div id="auth-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
-        <button id="register-btn">Create Account →</button>
+        <button id="register-btn">Create Account & Verify — $4.99 →</button>
         <p class="already-registered">
           Already have an account? <a id="show-login-link">Sign in</a>
         </p>
@@ -1778,7 +1778,7 @@
       if (error) {
         authErr.textContent = error.message;
         authErr.style.display = "block";
-        btn.disabled = false; btn.textContent = "Create Account →";
+        btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
         return;
       }
 
@@ -1793,19 +1793,28 @@
         console.error("users upsert failed:", upsertErr);
         authErr.textContent = "Could not save your profile: " + upsertErr.message;
         authErr.style.display = "block";
-        btn.disabled = false; btn.textContent = "Create Account →";
+        btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
         return;
       }
 
       const user = { name: emailLower.split("@")[0], email: emailLower, verified: false, zip: "", stateCode: null, stateName: null, county: null };
       saveUser(user);
       currentUser = user;
-      showUserBanner(user);
-      showScreen("polls");
-      POLLS = await loadPollDefs();
-      await loadCountsFromSupabase();
-      render();
-      btn.disabled = false; btn.textContent = "Create Account →";
+
+      // Combined flow: go straight to payment/verification after creating the account.
+      btn.textContent = "Redirecting to secure checkout…";
+      const ok = await startCheckout(emailLower, (e) => {
+        // If checkout couldn't start, fall back to the polls screen with the
+        // verify banner so the user can retry payment.
+        authErr.textContent = "Account created, but checkout couldn't start: " + e.message + " You can verify from the banner.";
+        authErr.style.display = "block";
+        showUserBanner(user);
+        showScreen("polls");
+        render();
+        btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+      });
+      // On success, startCheckout redirects to Stripe — nothing else runs.
+      if (!ok) return;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -2133,6 +2142,27 @@
     // ══════════════════════════════════════════════════════════════
     //  STRIPE VERIFICATION
     // ══════════════════════════════════════════════════════════════
+    // Reusable: start Stripe Checkout for a given email.
+    // Used by both the verify banner and the combined register+verify flow.
+    async function startCheckout(email, onError) {
+      try {
+        const res = await fetch("/api/create-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;   // go to Stripe
+          return true;
+        }
+        throw new Error(data.error || "Could not start checkout.");
+      } catch (e) {
+        if (typeof onError === "function") onError(e);
+        return false;
+      }
+    }
+
     const verifyBtnEl = document.getElementById("verify-btn");
     if (verifyBtnEl) {
       verifyBtnEl.addEventListener("click", async () => {
@@ -2140,24 +2170,12 @@
         vErr.style.display = "none";
         verifyBtnEl.disabled = true;
         verifyBtnEl.textContent = "Redirecting to secure checkout…";
-        try {
-          const res = await fetch("/api/create-checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: currentUser?.email })
-          });
-          const data = await res.json();
-          if (data.url) {
-            window.location.href = data.url;   // go to Stripe
-          } else {
-            throw new Error(data.error || "Could not start checkout.");
-          }
-        } catch (e) {
+        await startCheckout(currentUser?.email, (e) => {
           vErr.textContent = e.message;
           vErr.style.display = "block";
           verifyBtnEl.disabled = false;
           verifyBtnEl.textContent = "Verify & Activate — $4.99";
-        }
+        });
       });
     }
 
