@@ -536,34 +536,35 @@
       color: var(--cream);
     }
 
-    .options { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 28px; }
-    .rank-btn {
-      flex: 1 1 120px;
-      background: rgba(255,255,255,0.1);
+    /* Combined vertical option + live-stat rows */
+    .options-stats { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .option-stat {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: rgba(255,255,255,0.06);
       color: var(--cream);
-      border: 1.5px solid rgba(255,255,255,0.25);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border: 1.5px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      padding: 14px 18px;
       font-family: 'Source Serif 4', serif;
-      font-size: 0.95rem;
       cursor: pointer;
       transition: background 0.18s, border-color 0.18s, transform 0.12s;
-      text-align: center;
     }
-    .rank-btn:hover:not(:disabled) { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); transform: translateY(-1px); }
-    .rank-btn.selected { background: var(--teal-lt); border-color: var(--teal-lt); color: #fff; font-weight: 600; box-shadow: 0 4px 16px rgba(21,160,160,0.35); }
-    .rank-btn:disabled { cursor: default; opacity: 0.75; }
-
-    .results-label { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--teal-lt); margin-bottom: 14px; font-weight: 600; }
-    .result-row { margin-bottom: 14px; }
-    .result-meta { display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 5px; color: rgba(245,240,232,0.9); }
-    .result-meta .pct { font-weight: 600; color: var(--teal-lt); }
-    .bar-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); background: linear-gradient(90deg, var(--teal) 0%, var(--teal-lt) 100%); }
-    .bar-fill.selected-bar { background: linear-gradient(90deg, #0fa3a3, #28d4d4); }
+    .option-stat:hover:not(:disabled) { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); transform: translateY(-1px); }
+    .option-stat.selected { background: rgba(21,160,160,0.18); border-color: var(--teal-lt); box-shadow: 0 4px 16px rgba(21,160,160,0.28); }
+    .option-stat:disabled { cursor: default; }
+    .os-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 9px; }
+    .os-label { font-size: 0.98rem; line-height: 1.35; }
+    .option-stat.selected .os-label { font-weight: 600; }
+    .os-pct { font-weight: 600; color: var(--teal-lt); white-space: nowrap; font-size: 0.92rem; }
+    .os-count { opacity: 0.5; font-weight: 300; }
+    .os-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+    .os-fill { height: 100%; border-radius: 99px; transition: width 0.5s cubic-bezier(.4,0,.2,1); background: linear-gradient(90deg, var(--teal) 0%, var(--teal-lt) 100%); }
+    .os-fill.selected-bar { background: linear-gradient(90deg, #0fa3a3, #28d4d4); }
 
     .ranked-notice { font-size: 0.8rem; color: rgba(245,240,232,0.5); margin-top: 8px; font-style: italic; }
-    .total-rankings { font-size: 0.78rem; color: rgba(245,240,232,0.45); margin-top: 16px; }
+    .total-rankings { font-size: 0.78rem; color: rgba(245,240,232,0.45); margin-top: 4px; }
     .submitted-badge {
       display: inline-block;
       background: rgba(21,160,160,0.2);
@@ -2041,26 +2042,13 @@
               ${submitted && hasRanked ? '<span class="submitted-badge">✓ Submitted</span>' : ""}
             </p>
             <h2 class="poll-question">${poll.question}</h2>
-            <div class="options" id="opts-${poll.id}"></div>
-            <div class="results-section">
-              <p class="results-label">Results</p>
-              <div id="bars-${poll.id}"></div>
-              <p class="total-rankings">${total} ranking${total !== 1 ? "s" : ""} cast</p>
-              ${hasRanked ? `<p class="ranked-notice">✓ Ranked${submitted ? " · change answer and resubmit" : " · change before submitting"}</p>` : ""}
-            </div>
+            <div class="options-stats" id="opts-${poll.id}"></div>
+            <p class="total-rankings">${total} ranking${total !== 1 ? "s" : ""} cast</p>
+            ${hasRanked ? `<p class="ranked-notice">✓ Ranked${submitted ? " · change answer and resubmit" : " · change before submitting"}</p>` : ""}
           `;
           pollsEl.appendChild(card);
 
-          const optsEl = card.querySelector(`#opts-${poll.id}`);
-          poll.options.forEach(opt => {
-            const btn     = document.createElement("button");
-            btn.className = "rank-btn" + (ps.ranked === opt.id ? " selected" : "");
-            btn.textContent = opt.label;
-            btn.addEventListener("click", () => castRank(poll.id, opt.id, poll.options));
-            optsEl.appendChild(btn);
-          });
-
-          renderBars(poll, ps, total);
+          renderOptionStats(poll, ps, total);
         });
       });
 
@@ -2075,26 +2063,30 @@
       updateSubmitUI();
     }
 
-    function renderBars(poll, ps, total) {
-      const barsEl = document.getElementById(`bars-${poll.id}`);
-      if (!barsEl) return;
-      barsEl.innerHTML = "";
+    function renderOptionStats(poll, ps, total) {
+      const wrap = document.getElementById(`opts-${poll.id}`);
+      if (!wrap) return;
+      wrap.innerHTML = "";
       poll.options.forEach(opt => {
         const count      = ps.counts[opt.id] || 0;
         const pct        = total > 0 ? Math.round((count / total) * 100) : 0;
         const isSelected = ps.ranked === opt.id;
-        const row        = document.createElement("div");
-        row.className    = "result-row";
+
+        // Each option is a single clickable row showing its label and live stats.
+        const row = document.createElement("button");
+        row.className = "option-stat" + (isSelected ? " selected" : "");
+        row.disabled = submitted && false; // remain clickable so users can change answers
         row.innerHTML = `
-          <div class="result-meta">
-            <span>${opt.label}</span>
-            <span class="pct">${pct}% <span style="opacity:.5;font-weight:300">(${count})</span></span>
+          <div class="os-head">
+            <span class="os-label">${opt.label}</span>
+            <span class="os-pct">${pct}% <span class="os-count">(${count})</span></span>
           </div>
-          <div class="bar-track">
-            <div class="bar-fill ${isSelected ? "selected-bar" : ""}" style="width:${pct}%"></div>
+          <div class="os-track">
+            <div class="os-fill ${isSelected ? "selected-bar" : ""}" style="width:${pct}%"></div>
           </div>
         `;
-        barsEl.appendChild(row);
+        row.addEventListener("click", () => castRank(poll.id, opt.id, poll.options));
+        wrap.appendChild(row);
       });
     }
 
