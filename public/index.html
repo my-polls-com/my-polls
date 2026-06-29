@@ -1261,6 +1261,11 @@
             <input type="password" id="reg-password" placeholder="At least 6 characters" autocomplete="new-password" />
             <span class="field-error" id="err-password"></span>
           </div>
+          <div class="field">
+            <label for="reg-birthyear">Birth Year</label>
+            <input type="number" id="reg-birthyear" placeholder="e.g. 1990" inputmode="numeric" min="1900" max="2026" autocomplete="bday-year" />
+            <span class="field-error" id="err-birthyear"></span>
+          </div>
         </div>
         <div id="auth-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
         <button id="register-btn">Create Account & Verify — $4.99 →</button>
@@ -1283,6 +1288,11 @@
             <label for="login-password">Password</label>
             <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" />
             <span class="field-error" id="err-login-password"></span>
+          </div>
+          <div class="field">
+            <label for="login-birthyear">Birth Year</label>
+            <input type="number" id="login-birthyear" placeholder="e.g. 1990" inputmode="numeric" min="1900" max="2026" autocomplete="bday-year" />
+            <span class="field-error" id="err-login-birthyear"></span>
           </div>
         </div>
         <div id="login-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
@@ -1812,12 +1822,18 @@
     async function validateAndRegister() {
       const email    = document.getElementById("reg-email").value.trim();
       const password = document.getElementById("reg-password").value.trim();
+      const birthyear = document.getElementById("reg-birthyear").value.trim();
       const authErr  = document.getElementById("auth-error");
       authErr.style.display = "none";
       let valid = true;
 
       if (!email || !email.includes("@")) { setFieldError("email", "Please enter a valid email."); valid = false; } else clearFieldError("email");
       if (!password || password.length < 6) { setFieldError("password", "Password must be at least 6 characters."); valid = false; } else clearFieldError("password");
+      const yearNum = parseInt(birthyear, 10);
+      const thisYear = new Date().getFullYear();
+      if (!birthyear || isNaN(yearNum) || yearNum < 1900 || yearNum > thisYear) { setFieldError("birthyear", "Please enter a valid birth year."); valid = false; }
+      else if (thisYear - yearNum < 18) { setFieldError("birthyear", "You must be at least 18 to register."); valid = false; }
+      else clearFieldError("birthyear");
       if (!valid) return;
 
       const btn = document.getElementById("register-btn");
@@ -1836,6 +1852,7 @@
       const { error: upsertErr } = await db.from("users").upsert({
         email: emailLower,
         name: emailLower.split("@")[0],
+        birth_year: yearNum,
         verified: false
       }, { onConflict: "email" });
       if (upsertErr) {
@@ -1846,7 +1863,7 @@
         return;
       }
 
-      const user = { name: emailLower.split("@")[0], email: emailLower, verified: false, zip: "", stateCode: null, stateName: null, county: null };
+      const user = { name: emailLower.split("@")[0], email: emailLower, birthYear: yearNum, verified: false, zip: "", stateCode: null, stateName: null, county: null };
       saveUser(user);
       currentUser = user;
 
@@ -1872,6 +1889,7 @@
     async function loginUser() {
       const email    = document.getElementById("login-email").value.trim();
       const password = document.getElementById("login-password").value.trim();
+      const birthyear = document.getElementById("login-birthyear").value.trim();
       const loginErr = document.getElementById("login-error");
       loginErr.style.display = "none";
 
@@ -1879,6 +1897,13 @@
       else document.getElementById("err-login-email").textContent = "";
       if (!password) { document.getElementById("err-login-password").textContent = "Please enter your password."; return; }
       else document.getElementById("err-login-password").textContent = "";
+
+      const yearNum = parseInt(birthyear, 10);
+      const thisYear = new Date().getFullYear();
+      if (!birthyear) { document.getElementById("err-login-birthyear").textContent = "Please enter your birth year."; return; }
+      else if (isNaN(yearNum) || yearNum < 1900 || yearNum > thisYear) { document.getElementById("err-login-birthyear").textContent = "Please enter a valid birth year."; return; }
+      else if (thisYear - yearNum < 18) { document.getElementById("err-login-birthyear").textContent = "You must be at least 18 to sign in."; return; }
+      else document.getElementById("err-login-birthyear").textContent = "";
 
       const btn = document.getElementById("login-btn");
       btn.disabled = true; btn.textContent = "Signing in…";
@@ -1899,9 +1924,17 @@
         const r = await db.from("users").select("*").ilike("email", email.toLowerCase()).maybeSingle();
         profile = r.data;
       }
+      // If a birth year is on file, it must match what was entered.
+      if (profile && profile.birth_year != null && profile.birth_year !== yearNum) {
+        document.getElementById("err-login-birthyear").textContent = "Birth year does not match our records.";
+        btn.disabled = false; btn.textContent = "Sign In →";
+        await db.auth.signOut();
+        return;
+      }
+
       const user = profile
-        ? { name: profile.name || authEmail.split("@")[0], email: profile.email, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county, verified: profile.verified === true }
-        : { name: authEmail.split("@")[0], email: authEmail, zip: "", stateCode: null, stateName: null, county: null, verified: false };
+        ? { name: profile.name || authEmail.split("@")[0], email: profile.email, birthYear: profile.birth_year ?? yearNum, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county, verified: profile.verified === true }
+        : { name: authEmail.split("@")[0], email: authEmail, birthYear: yearNum, zip: "", stateCode: null, stateName: null, county: null, verified: false };
 
       saveUser(user);
       currentUser = user;
