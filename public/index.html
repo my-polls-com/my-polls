@@ -190,6 +190,83 @@
     #pw-cancel:hover { background: rgba(255,255,255,0.14); color: var(--cream); }
 
     /* ══════════════════════════════════════════
+       ACCOUNT MODAL
+    ══════════════════════════════════════════ */
+    #account-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      z-index: 900;
+      align-items: center;
+      justify-content: center;
+    }
+    #account-overlay.visible { display: flex; }
+    .account-rows {
+      margin: 6px 0 26px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .account-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .account-row .label {
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--teal-lt);
+      font-weight: 600;
+    }
+    .account-row .value {
+      font-size: 0.95rem;
+      color: var(--cream);
+      text-align: right;
+      word-break: break-word;
+    }
+    .account-actions { display: flex; flex-direction: column; gap: 12px; }
+    #cancel-sub-btn {
+      width: 100%;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.18s, background 0.18s;
+      background: rgba(180,60,50,0.18);
+      border: 1.5px solid rgba(220,90,80,0.5);
+      color: #f4a48b;
+    }
+    #cancel-sub-btn:hover { background: rgba(180,60,50,0.3); color: #ffd9cd; transform: translateY(-1px); }
+    #cancel-sub-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+    #account-close-btn {
+      width: 100%;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      color: rgba(245,240,232,0.6);
+      transition: background 0.18s, color 0.18s;
+    }
+    #account-close-btn:hover { background: rgba(255,255,255,0.14); color: var(--cream); }
+    #cancel-sub-note {
+      font-size: 0.75rem;
+      color: rgba(245,240,232,0.4);
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    /* ══════════════════════════════════════════
        REGISTER SCREEN
     ══════════════════════════════════════════ */
     #register-screen {
@@ -1162,6 +1239,9 @@
       color: rgba(245,240,232,0.35);
       letter-spacing: 0.08em;
     }
+    footer a { color: rgba(245,240,232,0.55); text-decoration: none; }
+    footer a:hover { color: var(--teal-lt); }
+    footer .sep { margin: 0 8px; opacity: 0.5; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(6px); }
@@ -1308,7 +1388,7 @@
   <!-- ══ POLLS SCREEN ═══════════════════════════════════════════════ -->
   <div id="polls-screen" class="screen">
     <div id="user-banner">
-      <div class="user-info">
+      <div class="user-info" id="account-trigger" style="cursor:pointer" title="View account">
         <div class="user-avatar" id="user-avatar">?</div>
         <div class="user-details">
           <span class="user-name" id="user-name-display">—</span>
@@ -1316,6 +1396,29 @@
         </div>
       </div>
       <button id="logout-btn">↩ Log out</button>
+    </div>
+
+    <!-- ══ ACCOUNT MODAL ══════════════════════════════════════════════ -->
+    <div id="account-overlay">
+      <div class="pw-modal">
+        <h2>Your Account</h2>
+        <p>Manage your account and access</p>
+        <div class="account-rows">
+          <div class="account-row">
+            <span class="label">Email</span>
+            <span class="value" id="account-email">—</span>
+          </div>
+          <div class="account-row">
+            <span class="label">ZIP Code</span>
+            <span class="value" id="account-zip">—</span>
+          </div>
+        </div>
+        <div class="account-actions">
+          <p id="cancel-sub-note">Cancelling ends your verified access and removes your billing ZIP. You'll need to verify again to vote.</p>
+          <button id="cancel-sub-btn">Cancel Subscription</button>
+          <button id="account-close-btn">Close</button>
+        </div>
+      </div>
     </div>
 
     <!-- Guest bar (shown to logged-out visitors): Register button top-right -->
@@ -1510,7 +1613,7 @@
     </div>
   </div>
 
-  <footer>A product of Livepoll, Inc</footer>
+  <footer>A product of Livepoll, Inc<span class="sep">·</span><a href="/privacy.html">Privacy Policy</a></footer>
 
   <script>
     // ══════════════════════════════════════════════════════════════
@@ -2987,6 +3090,73 @@
     document.getElementById("register-btn").addEventListener("click", validateAndRegister);
     document.getElementById("login-btn").addEventListener("click", loginUser);
     document.getElementById("logout-btn").addEventListener("click", logout);
+
+    // ── Account modal ────────────────────────────────────────────────
+    const accountOverlay = document.getElementById("account-overlay");
+    function openAccountModal() {
+      if (!currentUser || !currentUser.email) return;   // guests have no account
+      document.getElementById("account-email").textContent = currentUser.email;
+      document.getElementById("account-zip").textContent   = currentUser.zip || "Not set";
+      const cancelBtn = document.getElementById("cancel-sub-btn");
+      const note = document.getElementById("cancel-sub-note");
+      // Only verified users have something to cancel
+      if (currentUser.verified) {
+        cancelBtn.style.display = "";
+        note.style.display = "";
+      } else {
+        cancelBtn.style.display = "none";
+        note.style.display = "none";
+      }
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = "Cancel Subscription";
+      accountOverlay.classList.add("visible");
+    }
+    function closeAccountModal() { accountOverlay.classList.remove("visible"); }
+
+    document.getElementById("account-trigger").addEventListener("click", openAccountModal);
+    document.getElementById("account-close-btn").addEventListener("click", closeAccountModal);
+    accountOverlay.addEventListener("click", (e) => {
+      if (e.target === accountOverlay) closeAccountModal();
+    });
+
+    document.getElementById("cancel-sub-btn").addEventListener("click", async () => {
+      if (!currentUser || !currentUser.email) return;
+      const ok = confirm("Cancel your subscription? This ends your verified access and removes your billing ZIP. You'll need to verify again to vote.");
+      if (!ok) return;
+      const btn = document.getElementById("cancel-sub-btn");
+      btn.disabled = true; btn.textContent = "Cancelling…";
+      try {
+        await db.from("users").update({
+          verified: false,
+          verified_at: null,
+          card_fingerprint: null,
+          card_brand: null,
+          card_last4: null,
+          stripe_customer_id: null,
+          zip: null,
+          state: null,
+          state_name: null,
+          county: null
+        }).ilike("email", currentUser.email.toLowerCase());
+
+        currentUser.verified = false;
+        currentUser.zip = "";
+        currentUser.stateCode = null;
+        currentUser.stateName = null;
+        currentUser.county = null;
+        saveUser(currentUser);
+
+        showUserBanner(currentUser);
+        closeAccountModal();
+        render();
+        alert("Your subscription has been cancelled. Verify again any time to resume voting.");
+      } catch (e) {
+        console.error("cancel subscription error:", e);
+        btn.disabled = false; btn.textContent = "Cancel Subscription";
+        alert("Could not cancel right now. Please try again.");
+      }
+    });
+
     document.getElementById("guest-register-btn").addEventListener("click", () => {
       showScreen("register");
     });
