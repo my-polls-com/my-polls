@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service — We The People</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:wght@300;400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --teal:        #0d6e6e;
+      --teal-dk:     #094f4f;
+      --teal-lt:     #15a0a0;
+      --cream:       #f5f0e8;
+      --muted:       #6b7c7c;
+      --card-bg:     rgba(255,255,255,0.07);
+      --card-border: rgba(255,255,255,0.15);
+      --gold:        #c9a84c;
+      --gold-lt:     #e8c96a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0a4a4a 0%, #0d6e6e 40%, #0a5858 100%);
+      font-family: 'Source Serif 4', Georgia, serif;
+      color: var(--cream);
+      padding: 0 0 60px;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 60px 20px 40px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 3px;
+      background: var(--teal-lt);
+      margin: 24px auto 0;
+    }
+    .site-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--cream);
+      line-height: 1.1;
+    }
+    .site-title a { color: inherit; text-decoration: none; }
+    .site-sub {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--teal-lt);
+      font-weight: 300;
+    }
+
+    /* ── Flag ────────────────────────────────── */
+    .flag-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
+    .flag {
+      width: 90px; height: 47px;
+      border-radius: 3px; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    /* ── Policy card ─────────────────────────── */
+    .policy-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    .policy-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 48px clamp(22px, 5vw, 56px);
+      backdrop-filter: blur(6px);
+    }
+    .policy-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: 0.02em;
+      color: var(--cream);
+      line-height: 1.2;
+    }
+    .policy-org {
+      margin-top: 8px;
+      font-size: 1.05rem;
+      color: var(--teal-lt);
+      font-weight: 600;
+    }
+    .policy-updated {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      letter-spacing: 0.06em;
+      color: rgba(245,240,232,0.55);
+    }
+    .policy-intro {
+      margin-top: 22px;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: rgba(245,240,232,0.9);
+    }
+    .policy-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--gold-lt);
+      margin: 38px 0 14px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .policy-card h3 {
+      font-family: 'Source Serif 4', serif;
+      font-weight: 600;
+      font-size: 1.02rem;
+      color: var(--cream);
+      margin: 20px 0 6px;
+    }
+    .policy-card p {
+      font-size: 0.98rem;
+      line-height: 1.75;
+      color: rgba(245,240,232,0.85);
+      margin-bottom: 12px;
+    }
+    .policy-card p strong { color: var(--cream); font-weight: 600; }
+    .policy-card ul {
+      margin: 4px 0 12px;
+      padding-left: 22px;
+      color: rgba(245,240,232,0.85);
+    }
+    .policy-card li {
+      font-size: 0.98rem;
+      line-height: 1.7;
+      margin-bottom: 8px;
+    }
+    .policy-card li::marker { color: var(--teal-lt); }
+
+    /* ── Dispute-resolution callout ──────────── */
+    .policy-notice {
+      margin-top: 22px;
+      padding: 18px 22px;
+      background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 12px;
+      font-size: 0.96rem;
+      line-height: 1.7;
+      color: rgba(245,240,232,0.92);
+    }
+    .policy-notice strong { color: var(--gold-lt); }
+
+    .policy-card address {
+      font-style: normal;
+      line-height: 1.8;
+      color: rgba(245,240,232,0.85);
+      font-size: 0.98rem;
+      margin-top: 6px;
+    }
+    .policy-card address a { color: var(--teal-lt); text-decoration: none; }
+    .policy-card address a:hover { text-decoration: underline; }
+
+    /* ── Closing draft note ──────────────────── */
+    .policy-disclaimer {
+      margin-top: 34px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: rgba(245,240,232,0.5);
+      font-style: italic;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin: 32px 0 0;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--teal-lt);
+      text-decoration: none;
+      border: 1px solid rgba(21,160,160,0.4);
+      padding: 9px 18px;
+      border-radius: 8px;
+      transition: background 0.18s, border-color 0.18s;
+    }
+    .back-link:hover { background: rgba(21,160,160,0.15); border-color: var(--teal-lt); }
+
+    /* ── Footer ──────────────────────────────── */
+    footer {
+      text-align: center;
+      margin-top: 48px;
+      font-size: 0.78rem;
+      color: rgba(245,240,232,0.35);
+      letter-spacing: 0.08em;
+    }
+    footer a { color: rgba(245,240,232,0.55); text-decoration: none; }
+    footer a:hover { color: var(--teal-lt); }
+    footer .sep { margin: 0 8px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="flag-wrap">
+      <svg class="flag" viewBox="0 0 190 100" preserveAspectRatio="xMidYMid meet" role="img" aria-label="US flag">
+        <rect width="190" height="100" fill="#B22234"/>
+        <rect y="7.69"  width="190" height="7.69" fill="#FFFFFF"/>
+        <rect y="23.08" width="190" height="7.69" fill="#FFFFFF"/>
+        <rect y="38.46" width="190" height="7.69" fill="#FFFFFF"/>
+        <rect y="53.85" width="190" height="7.69" fill="#FFFFFF"/>
+        <rect y="69.23" width="190" height="7.69" fill="#FFFFFF"/>
+        <rect y="84.62" width="190" height="7.69" fill="#FFFFFF"/>
+        <rect width="76" height="53.85" fill="#3C3B6E"/>
+        <g fill="#FFFFFF">
+          <circle cx="6.3"  cy="5.4"  r="2.1"/><circle cx="18.9" cy="5.4"  r="2.1"/><circle cx="31.5" cy="5.4"  r="2.1"/>
+          <circle cx="44.1" cy="5.4"  r="2.1"/><circle cx="56.7" cy="5.4"  r="2.1"/><circle cx="69.3" cy="5.4"  r="2.1"/>
+          <circle cx="12.6" cy="11.5" r="2.1"/><circle cx="25.2" cy="11.5" r="2.1"/><circle cx="37.8" cy="11.5" r="2.1"/>
+          <circle cx="50.4" cy="11.5" r="2.1"/><circle cx="63"   cy="11.5" r="2.1"/>
+          <circle cx="6.3"  cy="17.6" r="2.1"/><circle cx="18.9" cy="17.6" r="2.1"/><circle cx="31.5" cy="17.6" r="2.1"/>
+          <circle cx="44.1" cy="17.6" r="2.1"/><circle cx="56.7" cy="17.6" r="2.1"/><circle cx="69.3" cy="17.6" r="2.1"/>
+          <circle cx="12.6" cy="23.7" r="2.1"/><circle cx="25.2" cy="23.7" r="2.1"/><circle cx="37.8" cy="23.7" r="2.1"/>
+          <circle cx="50.4" cy="23.7" r="2.1"/><circle cx="63"   cy="23.7" r="2.1"/>
+          <circle cx="6.3"  cy="29.8" r="2.1"/><circle cx="18.9" cy="29.8" r="2.1"/><circle cx="31.5" cy="29.8" r="2.1"/>
+          <circle cx="44.1" cy="29.8" r="2.1"/><circle cx="56.7" cy="29.8" r="2.1"/><circle cx="69.3" cy="29.8" r="2.1"/>
+          <circle cx="12.6" cy="35.9" r="2.1"/><circle cx="25.2" cy="35.9" r="2.1"/><circle cx="37.8" cy="35.9" r="2.1"/>
+          <circle cx="50.4" cy="35.9" r="2.1"/><circle cx="63"   cy="35.9" r="2.1"/>
+          <circle cx="6.3"  cy="42"   r="2.1"/><circle cx="18.9" cy="42"   r="2.1"/><circle cx="31.5" cy="42"   r="2.1"/>
+          <circle cx="44.1" cy="42"   r="2.1"/><circle cx="56.7" cy="42"   r="2.1"/><circle cx="69.3" cy="42"   r="2.1"/>
+          <circle cx="12.6" cy="48.1" r="2.1"/><circle cx="25.2" cy="48.1" r="2.1"/><circle cx="37.8" cy="48.1" r="2.1"/>
+          <circle cx="50.4" cy="48.1" r="2.1"/><circle cx="63"   cy="48.1" r="2.1"/>
+        </g>
+      </svg>
+    </div>
+    <p class="site-sub">Public Opinion Tracker</p>
+    <h1 class="site-title"><a href="/">We The People</a></h1>
+  </header>
+
+  <div class="policy-wrap">
+    <div class="policy-card">
+      <h1>Livepoll Terms of Service</h1>
+      <p class="policy-org">Livepoll, Inc.</p>
+      <p class="policy-updated">Last Updated: 07/04/2026</p>
+
+      <p class="policy-intro">Please read these Terms of Service (these "Terms") carefully. These Terms form a legally binding agreement between you and Livepoll, Inc., a Delaware corporation ("Livepoll," "we," "us," or "our"), and govern your access to and use of the Livepoll website located at my-polls.com, our mobile applications (if and when released), and any related products, features, content, and services (collectively, the "Service").</p>
+      <p class="policy-intro">By creating an account, purchasing a subscription, or otherwise accessing or using the Service, you agree to be bound by these Terms and by our Privacy Policy, which is incorporated into these Terms by reference. If you do not agree, do not use the Service.</p>
+
+      <p class="policy-notice"><strong>IMPORTANT NOTICE REGARDING DISPUTE RESOLUTION:</strong> Section 27 (Arbitration Agreement) and Section 28 (Class Action Waiver) require that disputes between you and Livepoll be resolved through binding individual arbitration rather than in court, subject to limited exceptions and an opt-out right. They affect your legal rights. Please read them carefully.</p>
+
+      <h2>1. Eligibility</h2>
+      <p>The Service is available only to individuals who are at least eighteen (18) years old and capable of forming a legally binding contract. The Service is intended solely for individuals located within the United States. We may restrict or deny access from any jurisdiction where operating the Service would create legal, regulatory, tax, licensing, privacy, or compliance obligations that Livepoll elects not to undertake.</p>
+      <p>Use of the Service is not conditioned upon voter registration, citizenship status, political affiliation, political activity, or participation in any election.</p>
+      <p>By using the Service, you represent and warrant that: (a) you satisfy all eligibility requirements in this Section; (b) all information you provide to us is accurate and complete; and (c) your use of the Service complies with applicable law.</p>
+
+      <h2>2. Description of the Service</h2>
+      <p>Livepoll is a civic public-opinion platform that allows verified users to participate in polls on national, state, and local topics and to view aggregated polling results and related insights. To support poll integrity, reduce fraud, and limit duplicate participation, Livepoll uses subscription-based account verification procedures, described in Sections 5 and 8.</p>
+      <p>Poll topics, questions, participation opportunities, available results, features, and functionality may be modified, added, suspended, or removed at any time in Livepoll's sole discretion, without liability to you.</p>
+      <p>Nothing in the Service constitutes scientific polling, election forecasting, legal advice, investment advice, governmental information, or academic research unless expressly stated otherwise.</p>
+
+      <h2>3. Accounts and Registration</h2>
+      <p>To access most features of the Service, you must create an account. Registration requires an email address, a password, your year of birth, and completion of a paid subscription (Section 4).</p>
+      <p>You agree to: (a) provide accurate, current, and complete registration information and keep it updated; (b) maintain the security and confidentiality of your login credentials; and (c) notify us promptly at ruflan@my-polls.com of any unauthorized access to or use of your account. You are responsible for all activity that occurs under your account.</p>
+      <p>Each individual may create and maintain only one account, unless expressly authorized by Livepoll in writing. We may employ technical and operational measures to detect and prevent duplicate accounts.</p>
+
+      <h2>4. Subscription; Automatic Renewal; Billing</h2>
+      <p><strong>Subscription fee.</strong> Access to the Service requires an active paid subscription. The current subscription fee is US $4.99 per year (the "Subscription Fee"), plus any applicable taxes.</p>
+      <p><strong>AUTOMATIC RENEWAL.</strong> YOUR SUBSCRIPTION AUTOMATICALLY RENEWS AT THE END OF EACH ONE-YEAR TERM, AND THE PAYMENT METHOD ON FILE WILL BE CHARGED THE THEN-CURRENT SUBSCRIPTION FEE FOR EACH RENEWAL TERM, UNLESS YOU CANCEL BEFORE THE RENEWAL DATE. By subscribing, you affirmatively consent to these automatic renewal terms.</p>
+      <p><strong>How to cancel.</strong> You may cancel your subscription at any time through your account settings on my-polls.com or by emailing ruflan@my-polls.com. Cancellation stops future renewal charges. Following cancellation, you will retain access to the Service through the end of your current paid term.</p>
+      <p><strong>Refunds.</strong> Except where required by applicable law, all Subscription Fees are non-refundable, including for partial subscription periods.</p>
+      <p><strong>Price changes.</strong> We may change the Subscription Fee for future renewal terms. If we do, we will provide you with advance notice (for example, by email or through the Service) before the new fee takes effect. If you do not agree to the new fee, you may cancel before your next renewal; your continued subscription after the change takes effect constitutes acceptance of the new fee.</p>
+      <p><strong>Payment processing.</strong> Payments are processed by third-party payment processors, including Stripe, Inc. We do not store your full payment card number. You represent that you are authorized to use the payment method you provide, and you authorize us and our payment processors to charge that payment method for the Subscription Fee and applicable taxes.</p>
+
+      <h2>5. Verification and Poll Integrity</h2>
+      <p>Livepoll uses commercially reasonable measures designed to verify accounts, detect and prevent fraud, detect and limit duplicate accounts, and protect the integrity of poll results. These measures may include, without limitation, payment-based verification, billing ZIP code verification, technical device signals, and pattern analysis. You agree not to circumvent or attempt to circumvent any such measures. We do not guarantee that these measures will prevent all fraudulent or duplicative activity.</p>
+
+      <h2>6. Poll Participation</h2>
+      <p>Participation in any poll is voluntary. We do not guarantee that every user will receive or be eligible for every poll; poll availability may depend on factors including your verified geography. Poll results reflect the responses of participating users only and are not guaranteed to be statistically representative of any population unless expressly stated otherwise.</p>
+
+      <h2>7. Neutrality</h2>
+      <p>Livepoll does not endorse candidates, political parties, or ballot measures. The presence of any topic, question, or answer option in a poll does not constitute an endorsement or expression of opinion by Livepoll.</p>
+
+      <h2>8. Acceptable Use</h2>
+      <p>You agree that you will not, and will not attempt to or assist others to:</p>
+      <ul>
+        <li>create more than one account, or create an account using false, misleading, or another person's identity or payment information;</li>
+        <li>manipulate, distort, or artificially influence poll participation or results, whether individually or in coordination with others;</li>
+        <li>use bots, scripts, automation tools, or other non-human means to access or interact with the Service;</li>
+        <li>scrape, harvest, or extract data from the Service except as expressly permitted;</li>
+        <li>upload or transmit malware, viruses, or other harmful code;</li>
+        <li>reverse engineer, decompile, or disassemble any part of the Service, except to the extent such restriction is prohibited by law;</li>
+        <li>interfere with or disrupt the Service, its servers, or its security features;</li>
+        <li>provide false information to Livepoll; or</li>
+        <li>use the Service in violation of any applicable law or regulation.</li>
+      </ul>
+      <p>We may investigate suspected violations and take any action we deem appropriate, including warning users, removing content, suspending or terminating accounts, and reporting to law enforcement.</p>
+
+      <h2>9. User Content; License to Livepoll</h2>
+      <p>"User Content" means poll responses, submissions, and any other content or information you provide through the Service. As between you and Livepoll, you retain ownership of your User Content.</p>
+      <p>You grant Livepoll a worldwide, perpetual, irrevocable, royalty-free, sublicensable, and transferable license to use, host, store, reproduce, analyze, aggregate, transform, adapt, publish, distribute, create derivative works from, and commercialize your User Content, in whole or in part, in connection with operating, improving, promoting, and commercializing the Service, including through aggregated and de-identified data products as described in Section 10.</p>
+      <p>You represent and warrant that you have all rights necessary to grant this license and that your User Content does not violate any law or infringe any third-party right.</p>
+
+      <h2>10. Aggregated and De-Identified Data</h2>
+      <p>Livepoll may compile, create, license, sell, publish, distribute, and otherwise commercialize aggregated and de-identified data, results, analyses, and insights derived from User Content and use of the Service. Livepoll will not knowingly sell datasets containing information that directly identifies individual users. Our collection and handling of personal information is described in our Privacy Policy.</p>
+
+      <h2>11. Intellectual Property</h2>
+      <p>The Service — including its software, design, text, graphics, logos, and other content (excluding User Content) — is owned by Livepoll or its licensors and is protected by copyright, trademark, and other intellectual property laws. Subject to these Terms, Livepoll grants you a limited, revocable, non-exclusive, non-transferable license to access and use the Service for your personal, non-commercial use. All rights not expressly granted are reserved.</p>
+      <p>"Livepoll," the Livepoll logo, and related names and marks are trademarks of Livepoll, Inc. You may not use them without our prior written consent.</p>
+
+      <h2>12. Enterprise Offerings</h2>
+      <p>Livepoll may in the future offer enterprise, institutional, or data-licensing products. Such offerings may be governed by separate written agreements, which will control over these Terms with respect to those offerings.</p>
+
+      <h2>13. Mobile Applications</h2>
+      <p>If Livepoll releases mobile applications, your use of those applications may also be subject to the terms and policies of the applicable app store or platform provider (such as Apple or Google), which are independent of these Terms.</p>
+
+      <h2>14. Privacy</h2>
+      <p>Our collection, use, and disclosure of personal information is governed by the Livepoll Privacy Policy, available at <a href="/privacy.html" style="color: var(--teal-lt); text-decoration: none;">my-polls.com/privacy.html</a>. By using the Service, you acknowledge the Privacy Policy.</p>
+
+      <h2>15. Third-Party Services</h2>
+      <p>The Service relies on third-party providers, including payment processors (such as Stripe), hosting and cloud infrastructure providers, and app stores. Livepoll is not responsible for the acts, omissions, availability, terms, or policies of third parties, and failures attributable to third parties do not constitute a breach of these Terms by Livepoll.</p>
+
+      <h2>16. Electronic Communications</h2>
+      <p>By using the Service, you consent to receive communications from us electronically, including by email and through notices posted on the Service, and you agree that all agreements, notices, disclosures, and other communications we provide electronically satisfy any legal requirement that such communications be in writing.</p>
+
+      <h2>17. Beta Features</h2>
+      <p>We may offer features identified as beta, preview, early access, or similar (collectively, "Beta Features"). Beta Features are provided "AS IS," may contain errors, may be modified or discontinued at any time without notice, and are excluded from any commitments or warranties that may otherwise apply to the Service.</p>
+
+      <h2>18. Copyright Complaints (DMCA)</h2>
+      <p>If you believe that content on the Service infringes your copyright, you may send a notification under the Digital Millennium Copyright Act ("DMCA") to our designated agent at ruflan@my-polls.com, including: (a) your physical or electronic signature; (b) identification of the copyrighted work claimed to be infringed; (c) identification of the material claimed to be infringing and its location on the Service; (d) your contact information; (e) a statement that you have a good-faith belief that the use is not authorized by the copyright owner, its agent, or the law; and (f) a statement, under penalty of perjury, that the information in the notice is accurate and that you are the copyright owner or authorized to act on the owner's behalf.</p>
+      <p>We will respond to valid DMCA notices and may remove or disable access to allegedly infringing material. We maintain a policy of terminating, in appropriate circumstances, the accounts of repeat infringers.</p>
+
+      <h2>19. Export Controls and Sanctions</h2>
+      <p>You represent that you are not located in, and are not a resident or national of, any country or territory subject to comprehensive U.S. sanctions, and that you are not on any U.S. government restricted-party list. You agree to comply with all applicable U.S. export control and sanctions laws in connection with your use of the Service.</p>
+
+      <h2>20. Warranty Disclaimer</h2>
+      <p>THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING WITHOUT LIMITATION IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. WITHOUT LIMITING THE FOREGOING, LIVEPOLL DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE; THAT DEFECTS WILL BE CORRECTED; OR THAT POLL RESULTS ARE ACCURATE, COMPLETE, OR REPRESENTATIVE. SOME JURISDICTIONS DO NOT ALLOW THE EXCLUSION OF CERTAIN WARRANTIES, SO SOME OF THE ABOVE EXCLUSIONS MAY NOT APPLY TO YOU.</p>
+
+      <h2>21. Limitation of Liability</h2>
+      <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW: (A) LIVEPOLL AND ITS OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, OR GOODWILL, ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES; AND (B) LIVEPOLL'S TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS ARISING OUT OF OR RELATING TO THESE TERMS OR THE SERVICE WILL NOT EXCEED THE GREATER OF (i) THE TOTAL SUBSCRIPTION FEES YOU PAID TO LIVEPOLL IN THE TWELVE (12) MONTHS IMMEDIATELY PRECEDING THE EVENT GIVING RISE TO THE CLAIM, OR (ii) ONE HUNDRED U.S. DOLLARS (US $100).</p>
+      <p>SOME JURISDICTIONS DO NOT ALLOW CERTAIN LIMITATIONS OF LIABILITY, SO SOME OF THE ABOVE LIMITATIONS MAY NOT APPLY TO YOU.</p>
+
+      <h2>22. Indemnification</h2>
+      <p>You agree to indemnify, defend, and hold harmless Livepoll and its affiliates, officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses (including reasonable attorneys' fees) arising out of or relating to: (a) your use or misuse of the Service; (b) your User Content; (c) your violation of these Terms; or (d) your violation of any law or third-party right.</p>
+
+      <h2>23. Suspension and Termination</h2>
+      <p>We may suspend, restrict, investigate, disable, or terminate your account or access to the Service at any time, with or without notice, for fraud, abuse, violation of these Terms, legal or regulatory reasons, security reasons, or other legitimate business reasons. You may stop using the Service and cancel your subscription at any time as described in Section 4.</p>
+      <p>Upon termination, your license to use the Service ends immediately. Sections that by their nature should survive termination — including Sections 9, 10, 11, 20, 21, 22, and 24 through 31 — survive.</p>
+
+      <h2>24. Governing Law</h2>
+      <p>These Terms and any dispute arising out of or relating to them or the Service are governed by the laws of the State of Delaware and applicable U.S. federal law, without regard to conflict-of-laws principles, except that the Federal Arbitration Act ("FAA") governs the interpretation and enforcement of Section 27.</p>
+
+      <h2>25. Informal Dispute Resolution</h2>
+      <p>Before initiating arbitration or any permitted court proceeding, you and Livepoll each agree to first attempt to resolve any dispute informally. The party raising the dispute must send the other a written notice describing the dispute and the requested relief ("Dispute Notice"). Notices to Livepoll must be sent to ruflan@my-polls.com or to the mailing address in Section 31. The parties agree to negotiate in good faith for at least sixty (60) days after the Dispute Notice is received before initiating arbitration or litigation. This informal process is a condition precedent to initiating any formal proceeding, and any applicable statute of limitations will be tolled during the process.</p>
+
+      <h2>26. Small Claims Option</h2>
+      <p>Either party may bring an individual claim in small claims court in a court of competent jurisdiction, instead of arbitration, so long as the claim remains in small claims court and is not removed or appealed to a court of general jurisdiction.</p>
+
+      <h2>27. Arbitration Agreement</h2>
+      <p><strong>Agreement to arbitrate.</strong> Except as provided in Sections 26 (small claims) and this Section, you and Livepoll agree that any dispute, claim, or controversy arising out of or relating to these Terms, the Privacy Policy, or the Service — including their formation, interpretation, breach, or termination, and including statutory, tort, and contract claims — will be resolved exclusively through final and binding individual arbitration administered by the American Arbitration Association ("AAA") under its Consumer Arbitration Rules then in effect, as modified by this Section. The FAA governs this arbitration agreement.</p>
+      <p><strong>Exceptions.</strong> Either party may (a) bring an individual claim in small claims court as described in Section 26, and (b) seek injunctive or other equitable relief in a court of competent jurisdiction to prevent actual or threatened infringement or misuse of intellectual property or unauthorized access to the Service.</p>
+      <p><strong>Arbitration procedure.</strong> The arbitration will be conducted by a single neutral arbitrator. For claims of US $10,000 or less, the arbitration will be conducted on the basis of documents only, unless either party requests a telephonic, video, or in-person hearing or the arbitrator determines a hearing is necessary. Any in-person hearing will take place in the county of your residence in the United States, unless the parties agree otherwise. The arbitrator may award the same individual relief that a court could award, including attorneys' fees where authorized by law, but may award relief only in favor of the individual party seeking relief and only to the extent necessary to resolve that party's individual claim.</p>
+      <p><strong>Fees.</strong> Payment of AAA filing, administrative, and arbitrator fees will be governed by the AAA Consumer Arbitration Rules. If your claim is for US $10,000 or less and is not determined by the arbitrator to be frivolous, Livepoll will pay AAA filing, administrative, and arbitrator fees to the extent they exceed the amount you would pay to file the claim in a court of competent jurisdiction.</p>
+      <p><strong>Opt-out right.</strong> You may opt out of this arbitration agreement (and the class action waiver in Section 28) by sending written notice to ruflan@my-polls.com within thirty (30) days after you first accept these Terms. The notice must include your name, the email address associated with your account, and a clear statement that you wish to opt out of arbitration. Opting out will not affect any other provision of these Terms.</p>
+      <p><strong>Severability within this Section.</strong> If any portion of this Section 27 is found unenforceable, the remaining portions will remain in effect, except that if the class action waiver in Section 28 is found unenforceable as to a particular claim, then that claim (and only that claim) must proceed in court rather than arbitration.</p>
+
+      <h2>28. Class Action Waiver</h2>
+      <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, YOU AND LIVEPOLL EACH AGREE THAT ANY PROCEEDING, WHETHER IN ARBITRATION OR IN COURT, WILL BE CONDUCTED ONLY ON AN INDIVIDUAL BASIS AND NOT AS A CLASS, COLLECTIVE, CONSOLIDATED, OR REPRESENTATIVE ACTION. THE ARBITRATOR MAY NOT CONSOLIDATE CLAIMS OF MORE THAN ONE PERSON AND MAY NOT PRESIDE OVER ANY FORM OF CLASS OR REPRESENTATIVE PROCEEDING.</p>
+
+      <h2>29. Mass Arbitration</h2>
+      <p>If twenty-five (25) or more similar arbitration demands are filed against Livepoll by the same or coordinated counsel or entities, the parties agree that the AAA's rules and procedures applicable to multiple or mass filings (or, if none apply, a staged process agreed by the parties or ordered by the AAA) will govern, including staged administration and bellwether proceedings where permitted. The parties agree to cooperate in good faith to implement such procedures, and applicable statutes of limitations will be tolled for claims in later stages.</p>
+
+      <h2>30. Changes to These Terms</h2>
+      <p>We may modify these Terms from time to time. If we make material changes, we will provide reasonable notice — for example, by posting the updated Terms on the Service with a new "Last Updated" date or by emailing you. Changes take effect on the date stated in the notice. Your continued use of the Service after changes take effect constitutes acceptance of the updated Terms. If you do not agree to the updated Terms, you must stop using the Service and may cancel your subscription.</p>
+
+      <h2>31. Miscellaneous; Contact</h2>
+      <p><strong>Entire agreement.</strong> These Terms, together with the Privacy Policy, constitute the entire agreement between you and Livepoll regarding the Service and supersede all prior agreements on that subject.</p>
+      <p><strong>Assignment.</strong> You may not assign or transfer these Terms or your account without our prior written consent. We may assign these Terms without restriction, including in connection with a merger, acquisition, or sale of assets.</p>
+      <p><strong>Force majeure.</strong> Livepoll will not be liable for any delay or failure to perform resulting from causes beyond its reasonable control, including acts of God, natural disasters, war, terrorism, labor disputes, governmental action, utility or internet failures, or failures of third-party providers.</p>
+      <p><strong>Severability.</strong> If any provision of these Terms is held invalid or unenforceable, that provision will be enforced to the maximum extent permissible and the remaining provisions will remain in full force.</p>
+      <p><strong>No waiver.</strong> Our failure to enforce any provision of these Terms is not a waiver of our right to do so later.</p>
+      <p><strong>Survival.</strong> Provisions that by their nature should survive termination of these Terms will survive.</p>
+      <p><strong>Contact.</strong></p>
+      <address>
+        Livepoll, Inc.<br />
+        275 Ventura Ave., Apt. 21<br />
+        Palo Alto, CA 94306<br />
+        Email: <a href="mailto:ruflan@my-polls.com">ruflan@my-polls.com</a><br />
+        Website: <a href="https://my-polls.com">my-polls.com</a>
+      </address>
+
+      <p class="policy-disclaimer">This document is a working draft prepared for Livepoll, Inc. It is not legal advice. It must be reviewed and approved by qualified legal counsel before publication, with particular attention to Sections 4 (automatic renewal), 21 (limitation of liability), and 25–29 (dispute resolution, arbitration, class action waiver, and mass arbitration).</p>
+
+      <a class="back-link" href="/">← Back to Polls</a>
+    </div>
+  </div>
+
+  <footer>A product of Livepoll, Inc<span class="sep">·</span><a href="/privacy.html">Privacy Policy</a><span class="sep">·</span><a href="/terms.html">Terms of Service</a></footer>
+
+</body>
+</html>
