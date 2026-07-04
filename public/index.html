@@ -376,6 +376,45 @@
     #register-btn:hover::after { background: rgba(255,255,255,0.08); }
     #register-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(13,110,110,0.55); }
     #register-btn:active { transform: translateY(0); }
+    #register-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    #register-btn:disabled:hover { transform: none; box-shadow: none; }
+    #register-btn:disabled:hover::after { background: rgba(255,255,255,0); }
+
+    .consent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .consent-row input[type="checkbox"] {
+      margin-top: 3px;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--teal-lt);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .consent-row label {
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: rgba(245,240,232,0.7);
+      cursor: pointer;
+    }
+    .consent-row label a {
+      color: var(--teal-lt);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .consent-disclosure {
+      font-size: 0.72rem;
+      line-height: 1.5;
+      color: rgba(245,240,232,0.4);
+      margin-bottom: 18px;
+    }
 
     .already-registered {
       text-align: center;
@@ -410,6 +449,8 @@
     }
     #verify-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,169,110,0.4); }
     #verify-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    #verify-banner .consent-row { margin-top: 14px; }
+    #verify-banner .consent-disclosure { margin-bottom: 0; }
     #user-banner {
       max-width: 760px;
       margin: 0 auto 8px;
@@ -1348,7 +1389,12 @@
           </div>
         </div>
         <div id="auth-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
-        <button id="register-btn">Create Account & Verify — $4.99 →</button>
+        <div class="consent-row">
+          <input type="checkbox" id="accept-terms" />
+          <label for="accept-terms">I agree to the <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></label>
+        </div>
+        <p class="consent-disclosure">$4.99/year subscription. Renews automatically each year until canceled. Cancel anytime in your account settings.</p>
+        <button id="register-btn" disabled>Create Account & Verify — $4.99 →</button>
         <p class="already-registered">
           Already have an account? <a id="show-login-link">Sign in</a>
         </p>
@@ -1433,8 +1479,13 @@
           <strong>Verify your account to vote</strong>
           <span>A one-time $4.99 card verification confirms you're a real person and unlocks voting. Your billing ZIP sets your local polls.</span>
         </div>
-        <button id="verify-btn">Verify &amp; Activate — $4.99</button>
+        <button id="verify-btn" disabled>Verify &amp; Activate — $4.99</button>
       </div>
+      <div class="consent-row" id="verify-consent-row">
+        <input type="checkbox" id="verify-accept-terms" />
+        <label for="verify-accept-terms">I agree to the <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></label>
+      </div>
+      <p class="consent-disclosure" id="verify-consent-disclosure">$4.99/year subscription. Renews automatically each year until canceled. Cancel anytime in your account settings.</p>
       <div id="verify-error" style="color:#f87171;font-size:0.8rem;margin-top:10px;display:none"></div>
     </div>
 
@@ -1939,6 +1990,12 @@
       else clearFieldError("birthyear");
       if (!valid) return;
 
+      if (!document.getElementById("accept-terms").checked) {
+        authErr.textContent = "Please accept the Terms of Service and Privacy Policy to continue.";
+        authErr.style.display = "block";
+        return;
+      }
+
       const btn = document.getElementById("register-btn");
       btn.disabled = true; btn.textContent = "Creating account…";
 
@@ -1956,7 +2013,8 @@
         email: emailLower,
         name: emailLower.split("@")[0],
         birth_year: yearNum,
-        verified: false
+        verified: false,
+        accepted_terms_at: new Date().toISOString()
       }, { onConflict: "email" });
       if (upsertErr) {
         console.error("users upsert failed:", upsertErr);
@@ -2452,11 +2510,27 @@
 
     const verifyBtnEl = document.getElementById("verify-btn");
     if (verifyBtnEl) {
+      const verifyAccept = document.getElementById("verify-accept-terms");
+      verifyAccept.addEventListener("change", () => {
+        verifyBtnEl.disabled = !verifyAccept.checked;
+      });
       verifyBtnEl.addEventListener("click", async () => {
         const vErr = document.getElementById("verify-error");
         vErr.style.display = "none";
+        if (!verifyAccept.checked) {
+          vErr.textContent = "Please accept the Terms of Service and Privacy Policy to continue.";
+          vErr.style.display = "block";
+          return;
+        }
         verifyBtnEl.disabled = true;
         verifyBtnEl.textContent = "Redirecting to secure checkout…";
+        // Record consent for this (possibly pre-existing) account; non-blocking.
+        if (currentUser?.email) {
+          const { error: consentErr } = await db.from("users")
+            .update({ accepted_terms_at: new Date().toISOString() })
+            .eq("email", currentUser.email);
+          if (consentErr) console.warn("Could not record accepted_terms_at:", consentErr);
+        }
         await startCheckout(currentUser?.email, (e) => {
           vErr.textContent = e.message;
           vErr.style.display = "block";
@@ -3088,6 +3162,13 @@
     //  EVENT BINDINGS
     // ══════════════════════════════════════════════════════════════
     document.getElementById("register-btn").addEventListener("click", validateAndRegister);
+    (function () {
+      const acceptTerms = document.getElementById("accept-terms");
+      const registerBtn = document.getElementById("register-btn");
+      acceptTerms.addEventListener("change", () => {
+        registerBtn.disabled = !acceptTerms.checked;
+      });
+    })();
     document.getElementById("login-btn").addEventListener("click", loginUser);
     document.getElementById("logout-btn").addEventListener("click", logout);
 
