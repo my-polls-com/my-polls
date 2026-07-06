@@ -336,6 +336,24 @@
       background: rgba(255,255,255,0.12);
     }
     .field input.invalid { border-color: var(--error); }
+    .pw-wrap { position: relative; display: block; }
+    .pw-wrap input { padding-right: 64px; }
+    .pw-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--teal-lt);
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      padding: 4px 6px;
+      opacity: 0.85;
+    }
+    .pw-toggle:hover { opacity: 1; text-decoration: underline; }
     .field-error {
       font-size: 0.75rem;
       color: #f4a48b;
@@ -717,7 +735,9 @@
       cursor: pointer;
       transition: background 0.18s, border-color 0.18s, transform 0.12s;
     }
-    .option-stat:hover:not(:disabled) { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); transform: translateY(-1px); }
+    @media (hover: hover) {
+      .option-stat:hover:not(:disabled):not(.selected) { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.45); transform: translateY(-1px); }
+    }
     .option-stat.selected {
       background: linear-gradient(135deg, rgba(21,160,160,0.45) 0%, rgba(40,212,212,0.30) 100%);
       border: 2px solid #2ee6e6;
@@ -1385,7 +1405,10 @@
           </div>
           <div class="field">
             <label for="reg-password">Password</label>
-            <input type="password" id="reg-password" placeholder="At least 6 characters" autocomplete="new-password" />
+            <div class="pw-wrap">
+              <input type="password" id="reg-password" placeholder="At least 6 characters" autocomplete="new-password" />
+              <button type="button" class="pw-toggle" data-target="reg-password" aria-label="Show password">Show</button>
+            </div>
             <span class="field-error" id="err-password"></span>
           </div>
           <div class="field">
@@ -1418,20 +1441,40 @@
           </div>
           <div class="field">
             <label for="login-password">Password</label>
-            <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" />
+            <div class="pw-wrap">
+              <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" />
+              <button type="button" class="pw-toggle" data-target="login-password" aria-label="Show password">Show</button>
+            </div>
             <span class="field-error" id="err-login-password"></span>
           </div>
-          <div class="field">
-            <label for="login-birthyear">Birth Year</label>
-            <input type="number" id="login-birthyear" placeholder="e.g. 1990" inputmode="numeric" min="1900" max="2026" autocomplete="bday-year" />
-            <span class="field-error" id="err-login-birthyear"></span>
-          </div>
         </div>
+        <div id="login-info" style="color:#8be0c9;font-size:0.8rem;margin-bottom:12px;display:none"></div>
         <div id="login-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
         <button id="login-btn">Sign In →</button>
+        <p class="already-registered" style="margin-top:10px">
+          <a id="forgot-pw-link">Forgot password?</a>
+        </p>
         <p class="already-registered">
           Don't have an account? <a id="show-signup-link">Create one</a>
         </p>
+      </div>
+
+      <!-- RESET PASSWORD FORM (shown when arriving from the reset email) -->
+      <div id="reset-form" style="display:none">
+        <h2 class="register-heading">Create New Password</h2>
+        <p class="register-sub">Enter a new password for your account</p>
+        <div class="field-group">
+          <div class="field">
+            <label for="reset-password">New Password</label>
+            <div class="pw-wrap">
+              <input type="password" id="reset-password" placeholder="At least 6 characters" autocomplete="new-password" />
+              <button type="button" class="pw-toggle" data-target="reset-password" aria-label="Show password">Show</button>
+            </div>
+            <span class="field-error" id="err-reset-password"></span>
+          </div>
+        </div>
+        <div id="reset-error" style="color:#f87171;font-size:0.8rem;margin-bottom:12px;display:none"></div>
+        <button id="reset-btn">Update Password →</button>
       </div>
 
     </div>
@@ -1463,6 +1506,10 @@
           <div class="account-row">
             <span class="label">ZIP Code</span>
             <span class="value" id="account-zip">—</span>
+          </div>
+          <div class="account-row">
+            <span class="label">Subscription</span>
+            <span class="value" id="account-sub-status">—</span>
           </div>
         </div>
         <div class="account-actions">
@@ -1803,6 +1850,19 @@
       if (submitSection) submitSection.style.display = (onPolls && currentUser) ? "block" : "none";
     }
 
+    // ── Subscription access window: one year from verification ──
+    const ACCESS_MS = 365 * 24 * 60 * 60 * 1000;
+    function accessUntil(u) {
+      if (!u?.verifiedAt) return null;
+      const t = Date.parse(u.verifiedAt);
+      return isNaN(t) ? null : new Date(t + ACCESS_MS);
+    }
+    function hasActiveAccess(u) {
+      if (!u?.verified) return false;
+      const until = accessUntil(u);
+      return until ? until.getTime() > Date.now() : true; // legacy verified accounts without a date stay active
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  ZIP CODE LOOKUP
     // ══════════════════════════════════════════════════════════════
@@ -1888,7 +1948,9 @@
               stateCode: profile.state,
               stateName: profile.state_name,
               county: profile.county,
-              verified: profile.verified === true
+              verified: profile.verified === true,
+              verifiedAt: profile.verified_at || null,
+              canceledAt: profile.canceled_at || null
             };
             saveUser(currentUser);
           }
@@ -1922,7 +1984,7 @@
     function updateVerifyBanner() {
       const vb = document.getElementById("verify-banner");
       if (!vb) return;
-      vb.style.display = (currentUser && !currentUser.verified) ? "block" : "none";
+      vb.style.display = (currentUser && !hasActiveAccess(currentUser)) ? "block" : "none";
     }
 
     async function loadCountsFromSupabase() {
@@ -2030,7 +2092,7 @@
         return;
       }
 
-      const user = { name: emailLower.split("@")[0], email: emailLower, birthYear: yearNum, verified: false, zip: "", stateCode: null, stateName: null, county: null };
+      const user = { name: emailLower.split("@")[0], email: emailLower, birthYear: yearNum, verified: false, verifiedAt: null, canceledAt: null, zip: "", stateCode: null, stateName: null, county: null };
       saveUser(user);
       currentUser = user;
 
@@ -2056,7 +2118,6 @@
     async function loginUser() {
       const email    = document.getElementById("login-email").value.trim();
       const password = document.getElementById("login-password").value.trim();
-      const birthyear = document.getElementById("login-birthyear").value.trim();
       const loginErr = document.getElementById("login-error");
       loginErr.style.display = "none";
 
@@ -2064,13 +2125,6 @@
       else document.getElementById("err-login-email").textContent = "";
       if (!password) { document.getElementById("err-login-password").textContent = "Please enter your password."; return; }
       else document.getElementById("err-login-password").textContent = "";
-
-      const yearNum = parseInt(birthyear, 10);
-      const thisYear = new Date().getFullYear();
-      if (!birthyear) { document.getElementById("err-login-birthyear").textContent = "Please enter your birth year."; return; }
-      else if (isNaN(yearNum) || yearNum < 1900 || yearNum > thisYear) { document.getElementById("err-login-birthyear").textContent = "Please enter a valid birth year."; return; }
-      else if (thisYear - yearNum < 18) { document.getElementById("err-login-birthyear").textContent = "You must be at least 18 to sign in."; return; }
-      else document.getElementById("err-login-birthyear").textContent = "";
 
       const btn = document.getElementById("login-btn");
       btn.disabled = true; btn.textContent = "Signing in…";
@@ -2091,17 +2145,9 @@
         const r = await db.from("users").select("*").ilike("email", email.toLowerCase()).maybeSingle();
         profile = r.data;
       }
-      // If a birth year is on file, it must match what was entered.
-      if (profile && profile.birth_year != null && profile.birth_year !== yearNum) {
-        document.getElementById("err-login-birthyear").textContent = "Birth year does not match our records.";
-        btn.disabled = false; btn.textContent = "Sign In →";
-        await db.auth.signOut();
-        return;
-      }
-
       const user = profile
-        ? { name: profile.name || authEmail.split("@")[0], email: profile.email, birthYear: profile.birth_year ?? yearNum, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county, verified: profile.verified === true }
-        : { name: authEmail.split("@")[0], email: authEmail, birthYear: yearNum, zip: "", stateCode: null, stateName: null, county: null, verified: false };
+        ? { name: profile.name || authEmail.split("@")[0], email: profile.email, birthYear: profile.birth_year ?? null, zip: profile.zip, stateCode: profile.state, stateName: profile.state_name, county: profile.county, verified: profile.verified === true, verifiedAt: profile.verified_at || null, canceledAt: profile.canceled_at || null }
+        : { name: authEmail.split("@")[0], email: authEmail, birthYear: null, zip: "", stateCode: null, stateName: null, county: null, verified: false, verifiedAt: null, canceledAt: null };
 
       saveUser(user);
       currentUser = user;
@@ -2584,6 +2630,7 @@
           await db.from("users").update({
             verified: true,
             verified_at: new Date().toISOString(),
+            canceled_at: null,
             card_fingerprint: result.fingerprint || null,
             card_brand: result.brand || null,
             card_last4: result.last4 || null,
@@ -2596,6 +2643,8 @@
 
           if (currentUser) {
             currentUser.verified = true;
+            currentUser.verifiedAt = new Date().toISOString();
+            currentUser.canceledAt = null;
             currentUser.zip = result.zip || "";
             currentUser.stateCode = loc?.stateCode || null;
             currentUser.stateName = loc?.stateName || null;
@@ -2612,8 +2661,8 @@
 
     document.getElementById("submit-button").addEventListener("click", async () => {
       if (!anyAnswered()) return;
-      // Gate: only verified users can vote
-      if (!currentUser?.verified) {
+      // Gate: only users with active (unexpired) verified access can vote
+      if (!hasActiveAccess(currentUser)) {
         const vb = document.getElementById("verify-banner");
         if (vb) { vb.style.display = "block"; vb.scrollIntoView({ behavior: "smooth", block: "center" }); }
         return;
@@ -3176,6 +3225,76 @@
       });
     })();
     document.getElementById("login-btn").addEventListener("click", loginUser);
+
+    // ── Forgot password: send reset email ──
+    document.getElementById("forgot-pw-link").addEventListener("click", async () => {
+      const email = document.getElementById("login-email").value.trim();
+      const loginErr  = document.getElementById("login-error");
+      const loginInfo = document.getElementById("login-info");
+      loginErr.style.display = "none"; loginInfo.style.display = "none";
+      if (!email) {
+        document.getElementById("err-login-email").textContent = "Enter your email above, then tap Forgot password.";
+        return;
+      }
+      document.getElementById("err-login-email").textContent = "";
+      const { error } = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/"
+      });
+      if (error) {
+        loginErr.textContent = error.message;
+        loginErr.style.display = "block";
+      } else {
+        loginInfo.textContent = "Check your email — we sent a link to create a new password.";
+        loginInfo.style.display = "block";
+      }
+    });
+
+    // ── When the user arrives from the reset email, show the new-password form ──
+    db.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        showScreen("register");
+        document.getElementById("signup-form").style.display = "none";
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("reset-form").style.display = "block";
+      }
+    });
+
+    // ── Save the new password ──
+    document.getElementById("reset-btn").addEventListener("click", async () => {
+      const pw = document.getElementById("reset-password").value.trim();
+      const errEl = document.getElementById("err-reset-password");
+      const resetErr = document.getElementById("reset-error");
+      resetErr.style.display = "none";
+      if (!pw || pw.length < 6) { errEl.textContent = "Password must be at least 6 characters."; return; }
+      errEl.textContent = "";
+      const btn = document.getElementById("reset-btn");
+      btn.disabled = true; btn.textContent = "Updating…";
+      const { error } = await db.auth.updateUser({ password: pw });
+      btn.disabled = false; btn.textContent = "Update Password →";
+      if (error) {
+        resetErr.textContent = error.message;
+        resetErr.style.display = "block";
+        return;
+      }
+      await db.auth.signOut();
+      document.getElementById("reset-form").style.display = "none";
+      document.getElementById("login-form").style.display = "block";
+      const info = document.getElementById("login-info");
+      info.textContent = "Password updated — sign in with your new password.";
+      info.style.display = "block";
+    });
+
+    // Show/hide password toggles (registration + sign-in)
+    document.querySelectorAll(".pw-toggle").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById(btn.dataset.target);
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.textContent = show ? "Hide" : "Show";
+        btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      });
+    });
     document.getElementById("logout-btn").addEventListener("click", logout);
 
     // ── Account modal ────────────────────────────────────────────────
@@ -3186,11 +3305,28 @@
       document.getElementById("account-zip").textContent   = currentUser.zip || "Not set";
       const cancelBtn = document.getElementById("cancel-sub-btn");
       const note = document.getElementById("cancel-sub-note");
-      // Only verified users have something to cancel
-      if (currentUser.verified) {
+      const statusEl = document.getElementById("account-sub-status");
+      const until = accessUntil(currentUser);
+      const untilStr = until ? until.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : null;
+      const active = hasActiveAccess(currentUser);
+
+      if (active && !currentUser.canceledAt) {
+        statusEl.textContent = untilStr ? `Active until ${untilStr}` : "Active";
         cancelBtn.style.display = "";
         note.style.display = "";
+        note.textContent = `Cancelling stops future charges. You keep full access until ${untilStr || "the end of your current term"}.`;
+      } else if (active && currentUser.canceledAt) {
+        statusEl.textContent = untilStr ? `Cancelled — access until ${untilStr}` : "Cancelled";
+        cancelBtn.style.display = "none";
+        note.style.display = "";
+        note.textContent = "Your subscription won't renew. Verify again after it ends to keep voting.";
+      } else if (currentUser.verified) {
+        statusEl.textContent = "Expired";
+        cancelBtn.style.display = "none";
+        note.style.display = "";
+        note.textContent = "Your access has ended. Verify again to resume voting.";
       } else {
+        statusEl.textContent = "Not verified";
         cancelBtn.style.display = "none";
         note.style.display = "none";
       }
@@ -3208,35 +3344,23 @@
 
     document.getElementById("cancel-sub-btn").addEventListener("click", async () => {
       if (!currentUser || !currentUser.email) return;
-      const ok = confirm("Cancel your subscription? This ends your verified access and removes your billing ZIP. You'll need to verify again to vote.");
+      const until = accessUntil(currentUser);
+      const untilStr = until ? until.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "the end of your current term";
+      const ok = confirm(`Cancel your subscription? You'll keep full access until ${untilStr}. After that, you'd need to verify again to vote.`);
       if (!ok) return;
       const btn = document.getElementById("cancel-sub-btn");
       btn.disabled = true; btn.textContent = "Cancelling…";
       try {
-        await db.from("users").update({
-          verified: false,
-          verified_at: null,
-          card_fingerprint: null,
-          card_brand: null,
-          card_last4: null,
-          stripe_customer_id: null,
-          zip: null,
-          state: null,
-          state_name: null,
-          county: null
-        }).ilike("email", currentUser.email.toLowerCase());
+        const canceledAt = new Date().toISOString();
+        await db.from("users").update({ canceled_at: canceledAt })
+          .ilike("email", currentUser.email.toLowerCase());
 
-        currentUser.verified = false;
-        currentUser.zip = "";
-        currentUser.stateCode = null;
-        currentUser.stateName = null;
-        currentUser.county = null;
+        currentUser.canceledAt = canceledAt;
         saveUser(currentUser);
 
-        showUserBanner(currentUser);
         closeAccountModal();
         render();
-        alert("Your subscription has been cancelled. Verify again any time to resume voting.");
+        alert(`Your subscription is cancelled and won't renew. You keep full access until ${untilStr}.`);
       } catch (e) {
         console.error("cancel subscription error:", e);
         btn.disabled = false; btn.textContent = "Cancel Subscription";
