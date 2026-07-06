@@ -1930,6 +1930,16 @@
         counties.map(c => `<option value="${c}">${c}</option>`).join("");
     });
 
+    // Password-recovery mode: reset links from email carry type=recovery in the URL hash.
+    // While in recovery, the normal auto-login routing must stand down.
+    let passwordRecoveryMode = (window.location.hash || "").includes("type=recovery");
+    function showResetForm() {
+      showScreen("register");
+      document.getElementById("signup-form").style.display = "none";
+      document.getElementById("login-form").style.display = "none";
+      document.getElementById("reset-form").style.display = "block";
+    }
+
     async function init() {
       loadAll();
 
@@ -1967,7 +1977,10 @@
       POLLS = await loadPollDefs();
       await loadCountsFromSupabase();
 
-      if (currentUser) {
+      if (passwordRecoveryMode) {
+        // Arrived from a password-reset email: show only the new-password form.
+        showResetForm();
+      } else if (currentUser) {
         showUserBanner(currentUser);
         showScreen("polls");
         updateVerifyBanner();
@@ -3252,10 +3265,8 @@
     // ── When the user arrives from the reset email, show the new-password form ──
     db.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
-        showScreen("register");
-        document.getElementById("signup-form").style.display = "none";
-        document.getElementById("login-form").style.display = "none";
-        document.getElementById("reset-form").style.display = "block";
+        passwordRecoveryMode = true;
+        showResetForm();
       }
     });
 
@@ -3277,6 +3288,10 @@
         return;
       }
       await db.auth.signOut();
+      passwordRecoveryMode = false;
+      currentUser = null;
+      try { localStorage.removeItem(KEY_USER); } catch (_) {}
+      window.history.replaceState(null, "", window.location.pathname);
       document.getElementById("reset-form").style.display = "none";
       document.getElementById("login-form").style.display = "block";
       const info = document.getElementById("login-info");
