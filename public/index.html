@@ -1330,7 +1330,7 @@
 
   <!-- ══ SHARED HEADER ══════════════════════════════════════════════ -->
   <header>
-    <button id="admin-header-link">⚙ Admin</button>
+    <button id="admin-header-link" style="display:none">⚙ Admin</button>
     <div class="flag-wrap">
       <svg class="flag" viewBox="0 0 190 100" xmlns="http://www.w3.org/2000/svg">
         <rect width="190" height="100" fill="#B22234"/>
@@ -2745,6 +2745,17 @@
     // ══════════════════════════════════════════════════════════════
     //  ADMIN — PASSWORD GATE
     // ══════════════════════════════════════════════════════════════
+    // The admin button is hidden from the public. Visit my-polls.com/#admin
+    // (or ?admin) to reveal it; the password modal still gates access.
+    if (window.location.hash === "#admin" || new URLSearchParams(window.location.search).has("admin")) {
+      document.getElementById("admin-header-link").style.display = "";
+    }
+    window.addEventListener("hashchange", () => {
+      if (window.location.hash === "#admin") {
+        document.getElementById("admin-header-link").style.display = "";
+      }
+    });
+
     document.getElementById("admin-header-link").addEventListener("click", () => {
       document.getElementById("pw-input").value = "";
       document.getElementById("pw-error").textContent = "";
