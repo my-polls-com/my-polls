@@ -746,6 +746,23 @@
       box-shadow: 0 0 0 1px rgba(46,230,230,0.35), 0 4px 20px rgba(21,160,160,0.5);
     }
     .option-stat:disabled { cursor: default; }
+    .expand-options-btn {
+      display: inline-block;
+      margin: 4px 0 14px;
+      padding: 8px 16px;
+      background: rgba(21,160,160,0.14);
+      border: 1px solid rgba(46,230,230,0.45);
+      border-radius: 8px;
+      color: var(--teal-lt);
+      font-family: 'Source Serif 4', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    @media (hover: hover) {
+      .expand-options-btn:hover { background: rgba(21,160,160,0.28); border-color: #2ee6e6; }
+    }
     .os-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 9px; }
     .os-label { font-size: 0.98rem; line-height: 1.35; }
     .option-stat.selected .os-label { font-weight: 700; color: #ffffff; }
@@ -2273,6 +2290,10 @@
     function anyAnswered() { return answeredCount() >= 1; }
 
     // ── Render polls grouped by level (respects activeFilter) ──────
+    // Polls whose options the user has expanded (collapsed by default).
+    // Kept across re-renders so voting doesn't collapse the card.
+    const expandedPolls = new Set();
+
     function render() {
       const container = document.getElementById("polls-container");
       container.innerHTML = "";
@@ -2354,6 +2375,7 @@
       const total     = poll.options.reduce((s, o) => s + (ps.counts[o.id] || 0), 0);
       const hasRanked = ps.ranked !== null;
       const num       = pollIndex[poll.id];
+      const isExpanded = expandedPolls.has(poll.id);
 
       const card = document.createElement("div");
       card.className = "poll-card" + (submitted && hasRanked ? " submitted-card" : "");
@@ -2364,13 +2386,22 @@
           ${submitted && hasRanked ? '<span class="submitted-badge">✓ Submitted</span>' : ""}
         </p>
         <h2 class="poll-question">${poll.question}</h2>
+        <button class="expand-options-btn" type="button">${isExpanded ? "Hide options ▴" : "Expand options ▾"}</button>
+        ${isExpanded ? `
         <div class="options-stats" id="opts-${poll.id}"></div>
         <p class="total-rankings">${total} ranking${total !== 1 ? "s" : ""} cast</p>
         ${hasRanked ? `<p class="ranked-notice">✓ Ranked${submitted ? " · change answer and resubmit" : " · change before submitting"}</p>` : ""}
+        ` : ""}
       `;
       pollsEl.appendChild(card);
 
-      renderOptionStats(poll, ps, total);
+      card.querySelector(".expand-options-btn").addEventListener("click", () => {
+        if (expandedPolls.has(poll.id)) expandedPolls.delete(poll.id);
+        else expandedPolls.add(poll.id);
+        render();
+      });
+
+      if (isExpanded) renderOptionStats(poll, ps, total);
     }
 
     // Guest browsing of State / County polls by location.
