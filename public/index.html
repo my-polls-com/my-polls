@@ -270,6 +270,7 @@
        REGISTER SCREEN
     ══════════════════════════════════════════ */
     #register-screen {
+      display: none;
       max-width: 480px;
       margin: 0 auto;
       padding: 0 20px 60px;
@@ -536,7 +537,7 @@
     /* ══════════════════════════════════════════
        POLLS SCREEN — LEVEL SECTIONS
     ══════════════════════════════════════════ */
-    #polls-screen { display: none; }
+    #polls-screen { display: block; }
 
     /* ── Level filter bar ────────────────────── */
     .level-filter-bar {
@@ -1586,7 +1587,7 @@
       </div>
     </div>
 
-    <main id="polls-container"></main>
+    <main id="polls-container"><div style="text-align:center;padding:80px 20px;color:rgba(245,240,232,0.35);font-style:italic">Loading polls…</div></main>
 
     <div class="submit-section" id="submit-section">
       <p class="progress-pill" id="progress-text">Rank at least one poll to submit</p>
