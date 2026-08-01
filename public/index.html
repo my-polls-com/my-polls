@@ -2101,6 +2101,72 @@
 
       const { data, error } = await db.auth.signUp({ email, password });
       if (error) {
+        const msg = (error.message || "").toLowerCase();
+        const alreadyExists = msg.includes("already") || msg.includes("registered") || msg.includes("exists");
+        if (alreadyExists) {
+          btn.textContent = "Checking your account…";
+          const { error: signInErr } = await db.auth.signInWithPassword({ email, password });
+          if (signInErr) {
+            authErr.innerHTML = 'This email already has an account. Please <a id="err-goto-signin" style="color:#7fe3e3;text-decoration:underline;cursor:pointer">sign in</a> instead.';
+            authErr.style.display = "block";
+            const link = document.getElementById("err-goto-signin");
+            if (link) link.addEventListener("click", () => {
+              document.getElementById("signup-form").style.display = "none";
+              document.getElementById("login-form").style.display = "block";
+              document.getElementById("login-email").value = email;
+              authErr.style.display = "none";
+            });
+            btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+            return;
+          }
+
+          const { data: prof } = await db.from("users").select("*").ilike("email", email).maybeSingle();
+
+          // Already paid and verified — just sign them in.
+          if (prof && prof.verified === true) {
+            const u = {
+              name: prof.name || email.split("@")[0], email: prof.email,
+              birthYear: prof.birth_year ?? null, zip: prof.zip,
+              stateCode: prof.state, stateName: prof.state_name, county: prof.county,
+              verified: true, verifiedAt: prof.verified_at || null, canceledAt: prof.canceled_at || null
+            };
+            saveUser(u); currentUser = u;
+            showUserBanner(u); showScreen("polls"); updateVerifyBanner(); render();
+            btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+            return;
+          }
+
+          // Unverified: explain clearly and let them choose to continue to payment.
+          await db.auth.signOut();
+          const emailLower2 = email.toLowerCase();
+          authErr.innerHTML =
+            'You already started signing up with this email, but the payment wasn\'t completed. ' +
+            '<a id="err-continue-pay" style="color:#7fe3e3;text-decoration:underline;cursor:pointer;font-weight:700">Continue to payment</a>';
+          authErr.style.display = "block";
+          btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+          const cont = document.getElementById("err-continue-pay");
+          if (cont) cont.addEventListener("click", async () => {
+            authErr.style.display = "none";
+            btn.disabled = true; btn.textContent = "Redirecting to secure checkout…";
+            await db.auth.signInWithPassword({ email, password });
+            await db.from("users").upsert({
+              email: emailLower2,
+              name: (prof && prof.name) || emailLower2.split("@")[0],
+              birth_year: yearNum,
+              verified: false,
+              accepted_terms_at: new Date().toISOString()
+            }, { onConflict: "email" });
+            const u2 = { name: emailLower2.split("@")[0], email: emailLower2, birthYear: yearNum, verified: false, verifiedAt: null, canceledAt: null, zip: "", stateCode: null, stateName: null, county: null };
+            saveUser(u2); currentUser = u2;
+            await startCheckout(emailLower2, (e) => {
+              authErr.textContent = "Checkout couldn't start: " + e.message + " You can verify from the banner.";
+              authErr.style.display = "block";
+              showUserBanner(u2); showScreen("polls"); render();
+              btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+            });
+          });
+          return;
+        }
         authErr.textContent = error.message;
         authErr.style.display = "block";
         btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
