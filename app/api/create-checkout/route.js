@@ -19,7 +19,7 @@ export async function POST(request) {
               name: "Livepoll Verification & Annual Access",
               description: "Verifies your identity and unlocks voting for one year.",
             },
-            unit_amount: 499,
+            unit_amount: 99,
           },
           quantity: 1,
         },

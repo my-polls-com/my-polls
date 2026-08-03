@@ -1441,8 +1441,8 @@
           <input type="checkbox" id="accept-terms" />
           <label for="accept-terms">I agree to the <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></label>
         </div>
-        <p class="consent-disclosure">$4.99/year subscription. Renews automatically each year until canceled. Cancel anytime in your account settings.</p>
-        <button id="register-btn" disabled>Create Account & Verify — $4.99 →</button>
+        <p class="consent-disclosure">$0.99/year subscription. Renews automatically each year until canceled. Cancel anytime in your account settings.</p>
+        <button id="register-btn" disabled>Create Account & Verify — $0.99 →</button>
         <p class="already-registered">
           Already have an account? <a id="show-login-link">Sign in</a>
         </p>
@@ -1549,15 +1549,15 @@
       <div class="vb-inner">
         <div class="vb-text">
           <strong>Verify your account to vote</strong>
-          <span>A one-time $4.99 card verification confirms you're a real person and unlocks voting. Your billing ZIP sets your local polls.</span>
+          <span>A one-time $0.99 card verification confirms you're a real person and unlocks voting. Your billing ZIP sets your local polls.</span>
         </div>
-        <button id="verify-btn" disabled>Verify &amp; Activate — $4.99</button>
+        <button id="verify-btn" disabled>Verify &amp; Activate — $0.99</button>
       </div>
       <div class="consent-row" id="verify-consent-row">
         <input type="checkbox" id="verify-accept-terms" />
         <label for="verify-accept-terms">I agree to the <a href="/terms.html" target="_blank" rel="noopener">Terms of Service</a> and <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a></label>
       </div>
-      <p class="consent-disclosure" id="verify-consent-disclosure">$4.99/year subscription. Renews automatically each year until canceled. Cancel anytime in your account settings.</p>
+      <p class="consent-disclosure" id="verify-consent-disclosure">$0.99/year subscription. Renews automatically each year until canceled. Cancel anytime in your account settings.</p>
       <div id="verify-error" style="color:#f87171;font-size:0.8rem;margin-top:10px;display:none"></div>
     </div>
 
@@ -2116,7 +2116,7 @@
               document.getElementById("login-email").value = email;
               authErr.style.display = "none";
             });
-            btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+            btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
             return;
           }
 
@@ -2132,7 +2132,7 @@
             };
             saveUser(u); currentUser = u;
             showUserBanner(u); showScreen("polls"); updateVerifyBanner(); render();
-            btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+            btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
             return;
           }
 
@@ -2143,7 +2143,7 @@
             'You already started signing up with this email, but the payment wasn\'t completed. ' +
             '<a id="err-continue-pay" style="color:#7fe3e3;text-decoration:underline;cursor:pointer;font-weight:700">Continue to payment</a>';
           authErr.style.display = "block";
-          btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+          btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
           const cont = document.getElementById("err-continue-pay");
           if (cont) cont.addEventListener("click", async () => {
             authErr.style.display = "none";
@@ -2162,14 +2162,14 @@
               authErr.textContent = "Checkout couldn't start: " + e.message + " You can verify from the banner.";
               authErr.style.display = "block";
               showUserBanner(u2); showScreen("polls"); render();
-              btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+              btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
             });
           });
           return;
         }
         authErr.textContent = error.message;
         authErr.style.display = "block";
-        btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+        btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
         return;
       }
 
@@ -2186,7 +2186,7 @@
         console.error("users upsert failed:", upsertErr);
         authErr.textContent = "Could not save your profile: " + upsertErr.message;
         authErr.style.display = "block";
-        btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+        btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
         return;
       }
 
@@ -2204,7 +2204,7 @@
         showUserBanner(user);
         showScreen("polls");
         render();
-        btn.disabled = false; btn.textContent = "Create Account & Verify — $4.99 →";
+        btn.disabled = false; btn.textContent = "Create Account & Verify — $0.99 →";
       });
       // On success, startCheckout redirects to Stripe — nothing else runs.
       if (!ok) return;
@@ -2699,7 +2699,7 @@
           vErr.textContent = e.message;
           vErr.style.display = "block";
           verifyBtnEl.disabled = false;
-          verifyBtnEl.textContent = "Verify & Activate — $4.99";
+          verifyBtnEl.textContent = "Verify & Activate — $0.99";
         });
       });
     }
