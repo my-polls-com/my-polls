@@ -540,6 +540,85 @@
     #polls-screen { display: block; }
 
     /* ── Level filter bar ────────────────────── */
+    #intro-block {
+      max-width: 940px;
+      margin: 0 auto 34px;
+      padding: 0 20px;
+    }
+    .intro-headline {
+      font-size: clamp(1.6rem, 4vw, 2.5rem);
+      line-height: 1.22;
+      color: var(--cream);
+      margin: 6px 0 14px;
+      font-weight: 700;
+    }
+    .intro-sub {
+      font-size: 1.02rem;
+      line-height: 1.65;
+      color: rgba(245,240,232,0.75);
+      margin: 0 0 30px;
+      max-width: 760px;
+    }
+    .intro-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+    .intro-step {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px 20px 18px;
+    }
+    .is-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: rgba(21,160,160,0.3);
+      border: 1px solid rgba(46,230,230,0.5);
+      color: #2ee6e6;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+    .intro-step h3 {
+      font-size: 1.05rem;
+      color: var(--cream);
+      margin: 0 0 7px;
+      font-weight: 700;
+    }
+    .intro-step p {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: rgba(245,240,232,0.62);
+      margin: 0;
+    }
+    .intro-why {
+      background: rgba(21,160,160,0.12);
+      border: 1px solid rgba(46,230,230,0.28);
+      border-radius: 14px;
+      padding: 22px 24px;
+    }
+    .intro-why h3 {
+      font-size: 1.08rem;
+      color: #2ee6e6;
+      margin: 0 0 10px;
+      font-weight: 700;
+    }
+    .intro-why p {
+      font-size: 0.93rem;
+      line-height: 1.65;
+      color: rgba(245,240,232,0.8);
+      margin: 0 0 10px;
+    }
+    .intro-fine {
+      font-size: 0.82rem !important;
+      color: rgba(245,240,232,0.5) !important;
+      margin: 0 !important;
+    }
     .level-filter-bar {
       max-width: 760px;
       margin: 0 auto 28px;
@@ -1561,6 +1640,36 @@
       <div id="verify-error" style="color:#f87171;font-size:0.8rem;margin-top:10px;display:none"></div>
     </div>
 
+    <!-- Intro for logged-out visitors -->
+    <section id="intro-block" style="display:none">
+      <h1 class="intro-headline">See what America actually thinks — and add your voice.</h1>
+      <p class="intro-sub">Livepoll is a civic polling platform where verified Americans weigh in on the issues that shape their lives — nationally, in their state, and in their own county. Real people, real places, results in real time.</p>
+
+      <div class="intro-steps">
+        <div class="intro-step">
+          <span class="is-num">1</span>
+          <h3>Verify you're real</h3>
+          <p>A $0.99/year card check confirms you're one person — not a bot or a duplicate account.</p>
+        </div>
+        <div class="intro-step">
+          <span class="is-num">2</span>
+          <h3>Answer polls</h3>
+          <p>National, state, and county questions, matched to where you actually live.</p>
+        </div>
+        <div class="intro-step">
+          <span class="is-num">3</span>
+          <h3>See results live</h3>
+          <p>Aggregate opinion updates instantly as people across the country respond.</p>
+        </div>
+      </div>
+
+      <div class="intro-why">
+        <h3>Why we charge 99¢</h3>
+        <p>Anyone can spam a free online poll. Livepoll uses a small annual payment to confirm each account belongs to a real, unique person in a real place — the same way stores verify buyers. It isn't a subscription for content. It's what makes the results trustworthy.</p>
+        <p class="intro-fine">Your individual answers are never published or sold — only anonymous aggregate results. Open to anyone living in the U.S.; no voter registration required. Cancel anytime; your access runs a full year.</p>
+      </div>
+    </section>
+
     <!-- Level filter bar -->
     <div class="level-filter-bar">
       <div class="level-filter-inner">
@@ -1864,6 +1973,8 @@
       document.getElementById("user-banner").style.display = (onPolls && currentUser) ? "flex" : "none";
       const guestBar = document.getElementById("guest-bar");
       if (guestBar) guestBar.style.display = (onPolls && !currentUser) ? "flex" : "none";
+      const introBlock = document.getElementById("intro-block");
+      if (introBlock) introBlock.style.display = (onPolls && !currentUser) ? "block" : "none";
       // Hide the submit/reset area for logged-out guests (they must register to vote).
       const submitSection = document.getElementById("submit-section");
       if (submitSection) submitSection.style.display = (onPolls && currentUser) ? "block" : "none";
