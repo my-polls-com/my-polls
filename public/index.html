@@ -1875,19 +1875,88 @@
     //  POLL DEFINITIONS — loaded from Supabase
     // ══════════════════════════════════════════════════════════════
     let POLLS = [];
+    // Tracks which scopes have already been fetched, so we never refetch.
+    const loadedScopes = new Set();
 
+    // Fetch polls for a scope and merge into POLLS (no duplicates).
+    //   scope: {national:true} | {stateCode:"CA"} | {stateCode:"CA", county:"Fresno"}
+    async function fetchPolls(scope) {
+      const key = scope.national ? "national"
+                : scope.county   ? `c:${scope.stateCode}:${scope.county}`
+                                 : `s:${scope.stateCode}`;
+      if (loadedScopes.has(key)) return;
+
+      let q = db.from("polls").select("*");
+      if (scope.national)      q = q.eq("level", "national");
+      else if (scope.county)   q = q.eq("level", "county").eq("state_code", scope.stateCode).eq("county", scope.county);
+      else                     q = q.eq("level", "state").eq("state_code", scope.stateCode);
+
+      const { data: pollRows, error } = await q.order("created_at");
+      if (error) { console.error("fetchPolls:", error); return; }
+      if (!pollRows || !pollRows.length) { loadedScopes.add(key); return; }
+
+      const ids = pollRows.map(p => p.id);
+      const { data: optRows, error: oerr } = await db
+        .from("poll_options").select("*").in("poll_id", ids);
+      if (oerr) console.error("fetchPolls options:", oerr);
+
+      const have = new Set(POLLS.map(p => p.id));
+      pollRows.forEach(p => {
+        if (have.has(p.id)) return;
+        POLLS.push({
+          id: p.id,
+          level: p.level || "national",
+          question: p.question,
+          stateCode: p.state_code || null,
+          stateName: p.state_name || null,
+          county: p.county || null,
+          options: (optRows || []).filter(o => o.poll_id === p.id)
+        });
+      });
+      loadedScopes.add(key);
+    }
+
+    // Load everything relevant to the current user (or just national for guests).
     async function loadPollDefs() {
-      const { data: pollRows, error } = await db.from("polls").select("*").order("created_at");
-      if (error) { console.error("loadPollDefs:", error); return []; }
-      const { data: optRows } = await db.from("poll_options").select("*");
-      return pollRows.map(p => ({
+      POLLS = [];
+      loadedScopes.clear();
+      await fetchPolls({ national: true });
+      if (currentUser && currentUser.stateCode) {
+        await fetchPolls({ stateCode: currentUser.stateCode });
+        if (currentUser.county) {
+          await fetchPolls({ stateCode: currentUser.stateCode, county: currentUser.county });
+        }
+      }
+      return POLLS;
+    }
+
+    // Admin needs the full dataset; used only on the admin screen.
+    async function loadAllPollDefs() {
+      const all = [];
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await db.from("polls").select("*")
+          .order("created_at").range(from, from + PAGE - 1);
+        if (error) { console.error("loadAllPollDefs:", error); break; }
+        all.push(...(data || []));
+        if (!data || data.length < PAGE) break;
+      }
+      const opts = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await db.from("poll_options").select("*")
+          .range(from, from + PAGE - 1);
+        if (error) { console.error("loadAllPollDefs options:", error); break; }
+        opts.push(...(data || []));
+        if (!data || data.length < PAGE) break;
+      }
+      return all.map(p => ({
         id: p.id,
         level: p.level || "national",
         question: p.question,
         stateCode: p.state_code || null,
         stateName: p.state_name || null,
         county: p.county || null,
-        options: (optRows || []).filter(o => o.poll_id === p.id)
+        options: opts.filter(o => o.poll_id === p.id)
       }));
     }
 
@@ -2131,9 +2200,18 @@
     }
 
     async function loadCountsFromSupabase() {
-      // Load ALL submissions (for global counts) and the current user's own votes
-      const { data: subs, error } = await db.from("submissions").select("poll_id, option_id, user_id");
-      if (error) { console.error("loadCounts:", error); return; }
+      // Only fetch submissions for the polls currently loaded (keeps payload small)
+      const pollIds = POLLS.map(p => p.id);
+      if (!pollIds.length) return;
+      const subs = [];
+      const BATCH = 200;
+      for (let i = 0; i < pollIds.length; i += BATCH) {
+        const { data, error } = await db.from("submissions")
+          .select("poll_id, option_id, user_id")
+          .in("poll_id", pollIds.slice(i, i + BATCH));
+        if (error) { console.error("loadCounts:", error); return; }
+        subs.push(...(data || []));
+      }
 
       // Get current user's auth id so we can restore their own selections
       let myUserId = null;
@@ -2615,9 +2693,11 @@
             const btn = document.createElement("button");
             btn.className = "gb-state-card";
             btn.textContent = STATE_NAMES[code];
-            btn.addEventListener("click", () => {
+            btn.addEventListener("click", async () => {
               guestBrowseState = code;
               guestBrowseCounty = null;
+              await fetchPolls({ stateCode: code });
+              await loadCountsFromSupabase();
               render();
             });
             grid.appendChild(btn);
@@ -2649,8 +2729,14 @@
         select.className = "gb-county-select";
         select.innerHTML = `<option value="">Select a county…</option>` +
           counties.map(c => `<option value="${c}"${c === guestBrowseCounty ? " selected" : ""}>${c}</option>`).join("");
-        select.addEventListener("change", () => {
+        select.addEventListener("change", async () => {
           guestBrowseCounty = select.value || null;
+          if (guestBrowseCounty) {
+            select.disabled = true;
+            await fetchPolls({ stateCode: guestBrowseState, county: guestBrowseCounty });
+            await loadCountsFromSupabase();
+            select.disabled = false;
+          }
           render();
         });
         body.appendChild(select);
@@ -2986,12 +3072,13 @@
     function closePwModal() {
       document.getElementById("pw-overlay").classList.remove("visible");
     }
-    function attemptAdminLogin() {
+    async function attemptAdminLogin() {
       const val = document.getElementById("pw-input").value;
       if (val === ADMIN_PASSWORD) {
         closePwModal();
         adminMode = true;
         showScreen("admin");
+        POLLS = await loadAllPollDefs();
         renderAdminDashboard();
       } else {
         document.getElementById("pw-input").classList.add("invalid");
@@ -3200,7 +3287,7 @@
       await db.from("poll_options").delete().eq("poll_id", id);
       const { error } = await db.from("polls").delete().eq("id", id);
       if (error) { console.error("deletePoll:", error); alert("Could not delete poll: " + error.message); return; }
-      POLLS = await loadPollDefs();
+      POLLS = await loadAllPollDefs();
       renderPollsMgmt();
       renderStatsPanel().catch(console.error);
       render();
@@ -3427,7 +3514,7 @@
         ? polls.find(p => p.id === editingPollId)
         : polls[polls.length - 1];
       await savePollToSupabase(pollToSave);
-      POLLS = await loadPollDefs();
+      POLLS = await loadAllPollDefs();
       renderPollsMgmt();
       renderStatsPanel().catch(console.error);
       resetCreateForm();
